@@ -44,6 +44,6 @@ export async function extraerTextoPdf(archivo: DocumentPickerAsset): Promise<{ t
     }).join('\n');
     return { texto, paginas: resultado.totalPages };
   } finally {
-    await (pdf as unknown as { destroy(): Promise<void> }).destroy();
+    await pdf.cleanup();
   }
 }
