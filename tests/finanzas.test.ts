@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { calcularCartera, resumenMes, resumenAnual, type Operacion, type Categoria, type Movimiento } from '../src/domain/finanzas.ts';
 import { esDuplicado, extraerGastosDeTexto } from '../src/domain/estadoCuenta.ts';
+import { reconstruirTextoPdf } from '../src/domain/textoPdf.ts';
 
 const op = (o: Partial<Operacion> & Pick<Operacion, 'fecha' | 'tipo' | 'cantidad' | 'precio'>): Operacion => ({
   id: Math.random().toString(36),
@@ -136,4 +137,45 @@ test('entiende movimientos de tarjeta BBVA con dos fechas y excluye pagos', () =
   assert.equal(gastos[0].descripcion, 'FARM SIMILARES SUC 123');
   assert.equal(gastos[0].importe, 450);
   assert.equal(gastos[0].categoria_id, 'salud');
+});
+
+test('entiende cuenta de débito BBVA con fechas 07/AGO y columnas de saldos', () => {
+  const categorias: Categoria[] = [
+    { id: 'comida', nombre: 'Comida', tipo: 'Gasto', orden: 1 },
+    { id: 'otros', nombre: 'Otros', tipo: 'Gasto', orden: 2 },
+  ];
+  const gastos = extraerGastosDeTexto(`
+    Estado de Cuenta Libretón Básico Cuenta Digital
+    FECHA OPER LIQ DESCRIPCION REFERENCIA CARGOS ABONOS SALDO
+    07/AGO 07/AGO OXXO MADERO 29.00
+    12/AGO 12/AGO DEPOSITO EFECTIVO PRACTIC 2,800.00
+    14/AGO 14/AGO SPEI RECIBIDO BANORTE 5,600.00
+    16/AGO 17/AGO PAGO CUENTA DE TERCERO 250.00 2,821.60 2,087.59
+  `, categorias, 2026);
+  assert.deepEqual(gastos.map((g) => [g.fecha, g.descripcion, g.importe, g.categoria_id]), [
+    ['2026-08-07', 'OXXO MADERO', 29, 'comida'],
+    ['2026-08-16', 'PAGO CUENTA DE TERCERO', 250, 'otros'],
+  ]);
+});
+
+test('reconstruye una fila aunque los fragmentos caigan a ambos lados del redondeo', () => {
+  const texto = reconstruirTextoPdf([[
+    { str: '18/AGO', x: 10, y: 100.9 },
+    { str: '18/AGO', x: 60, y: 99.2 },
+    { str: 'SUBWAY48626', x: 120, y: 100.1 },
+    { str: '158.00', x: 300, y: 99.5 },
+  ]]);
+  assert.equal(texto, '18/AGO 18/AGO SUBWAY48626 158.00');
+});
+
+test('marca importes en la columna ABONOS aunque la descripción parezca un pago', () => {
+  const texto = reconstruirTextoPdf([[
+    { str: 'CARGOS', x: 380, y: 200 },
+    { str: 'ABONOS', x: 430, y: 200 },
+    { str: '07/AGO', x: 10, y: 180 },
+    { str: '07/AGO', x: 60, y: 180 },
+    { str: 'PAGO CUENTA DE TERCERO', x: 110, y: 180 },
+    { str: '400.00', x: 432, y: 180 },
+  ]]);
+  assert.match(texto, /PAGO CUENTA DE TERCERO 400\.00 \[ABONO\]/);
 });

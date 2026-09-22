@@ -89,6 +89,36 @@ export async function borrarMovimiento(id: string) {
   if (error) lanzar(error);
 }
 
+// ─── Cuenta del usuario ──────────────────────────────────────
+
+export interface ResumenDatosUsuario {
+  movimientos: number;
+  operaciones: number;
+  presupuestos: number;
+}
+
+/** Cantidades visibles para la sesión actual; RLS impide contar datos ajenos. */
+export async function cargarResumenDatosUsuario(): Promise<ResumenDatosUsuario> {
+  const [movimientos, operaciones, presupuestos] = await Promise.all([
+    supabase.from('movimientos').select('id', { count: 'exact', head: true }),
+    supabase.from('operaciones').select('id', { count: 'exact', head: true }),
+    supabase.from('presupuestos').select('id', { count: 'exact', head: true }),
+  ]);
+  const error = movimientos.error ?? operaciones.error ?? presupuestos.error;
+  if (error) lanzar(error);
+  return {
+    movimientos: movimientos.count ?? 0,
+    operaciones: operaciones.count ?? 0,
+    presupuestos: presupuestos.count ?? 0,
+  };
+}
+
+/** Borra todos los datos financieros de la sesión en una sola transacción. */
+export async function borrarTodosMisDatos() {
+  const { error } = await supabase.rpc('borrar_todos_mis_datos');
+  if (error) lanzar(error);
+}
+
 // ─── Operaciones de acciones ──────────────────────────────────
 
 const aOperacion = (r: Record<string, unknown>): Operacion => ({

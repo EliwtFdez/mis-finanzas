@@ -24,7 +24,7 @@ const MESES: Record<string, number> = {
   dic: 12, diciembre: 12, dec: 12, december: 12,
 };
 
-const PALABRAS_INGRESO = /\b(abono|deposito|dep[oó]sito|nomina|n[oó]mina|pago recibido|transferencia recibida|reembolso|cashback|intereses a favor)\b/i;
+const PALABRAS_INGRESO = /\b(abono|deposito|dep[oó]sito|nomina|n[oó]mina|spei\s*recibido\w*|recibidostp|pago recibido|transferencia recibida|reembolso|cashback|intereses a favor)\b/i;
 const PALABRAS_NO_MOVIMIENTO = /\b(saldo (anterior|inicial|final|promedio)|total (de )?(pagos|compras|cargos|abonos)|fecha descripci[oó]n|pago para no generar|l[ií]mite de cr[eé]dito|resumen de movimientos)\b/i;
 
 function sinAcentos(s: string) {
@@ -46,8 +46,8 @@ function leerFecha(linea: string, anioPredeterminado: number): { fecha: string; 
     return fecha ? { fecha, fin: numerica[0].length } : null;
   }
 
-  // Acepta "18 ago 2026", "18 de agosto de 2026" y el formato BBVA "18-ago-2026".
-  const texto = linea.match(/^\s*(\d{1,2})(?:\s+(?:de\s+)?|\s*-\s*)([a-záéíóú]{3,12})(?:(?:\s+(?:de\s+)?|\s*-\s*)(\d{2,4}))?\b/i);
+  // Acepta "18 ago 2026", "18 de agosto de 2026", "18-ago-2026" y "18/AGO".
+  const texto = linea.match(/^\s*(\d{1,2})(?:\s+(?:de\s+)?|\s*[-/]\s*)([a-záéíóú]{3,12})(?:(?:\s+(?:de\s+)?|\s*[-/]\s*)(\d{4}))?\b/i);
   if (!texto) return null;
   const mes = MESES[sinAcentos(texto[2])];
   if (!mes) return null;
@@ -59,7 +59,7 @@ function leerFecha(linea: string, anioPredeterminado: number): { fecha: string; 
 
 function leerImporte(linea: string): { importe: number; inicio: number; negativo: boolean } | null {
   // Exige centavos, separador de miles o signo de moneda para no confundir folios con importes.
-  const patron = /[+-]?\s*(?:\$|MXN\s*)?\s*\(?\s*(?:\d{1,3}(?:[ ,]\d{3})+|\d+)\.\d{2}\)?/gi;
+  const patron = /[+-]?\s*(?:\$|MXN\s*)?\s*\(?\s*(?:\d{1,3}(?:,\d{3})+|\d+)\.\d{2}\)?/gi;
   const hallados = [...linea.matchAll(patron)].filter((m) => m.index !== undefined);
   if (!hallados.length) return null;
 
