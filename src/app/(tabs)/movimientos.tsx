@@ -7,7 +7,7 @@ import { aPesos, fechaLegible } from '@/lib/formato';
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
-import { BotonFlotante, MensajeError, Opciones, Pantalla, Renglon, Seccion, Vacio } from '@/components/ui';
+import { Boton, BotonFlotante, MensajeError, Opciones, Pantalla, Renglon, Seccion, Vacio } from '@/components/ui';
 
 const FILTROS = ['Todos', 'Gastos', 'Ingresos'] as const;
 
@@ -35,6 +35,12 @@ export default function Movimientos() {
       <View style={{ marginTop: espacio.s }}>
         <Opciones opciones={FILTROS} valor={filtro} onCambio={setFiltro} />
       </View>
+
+      <Boton
+        titulo="Cargar estado de cuenta PDF"
+        variante="secundario"
+        onPress={() => router.push('/importar-estado')}
+      />
 
       {datos && delMes.length === 0 && (
         <Vacio>No hay movimientos en este mes. Registra tu primer gasto o ingreso con el botón de abajo.</Vacio>

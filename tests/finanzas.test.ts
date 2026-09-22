@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { calcularCartera, resumenMes, resumenAnual, type Operacion, type Categoria, type Movimiento } from '../src/domain/finanzas.ts';
+import { esDuplicado, extraerGastosDeTexto } from '../src/domain/estadoCuenta.ts';
 
 const op = (o: Partial<Operacion> & Pick<Operacion, 'fecha' | 'tipo' | 'cantidad' | 'precio'>): Operacion => ({
   id: Math.random().toString(36),
@@ -88,4 +89,31 @@ test('resumen de septiembre con presupuesto total y por categoría', () => {
     ['Servicios', 350, null],
   ]);
   assert.equal(resumenAnual(2026, movimientos)[7].gastos, 999);
+});
+
+test('extrae, categoriza y ordena gastos de un estado de cuenta', () => {
+  const categorias: Categoria[] = [
+    { id: 'comida', nombre: 'Comida', tipo: 'Gasto', orden: 1 },
+    { id: 'salud', nombre: 'Salud', tipo: 'Gasto', orden: 2 },
+    { id: 'otros', nombre: 'Otros', tipo: 'Gasto', orden: 3 },
+  ];
+  const gastos = extraerGastosDeTexto(`
+    FECHA DESCRIPCIÓN CARGO SALDO
+    20/09 FARMACIA DEL AHORRO $450.00 $2,100.00
+    19/09 SUPERMERCADO LA ESQUINA 1,250.50 2,550.00
+    18/09 DEPÓSITO NÓMINA $8,000.00 $3,800.50
+    17/09 SALDO ANTERIOR $9,999.00
+  `, categorias, 2026);
+  assert.equal(gastos.length, 2);
+  assert.deepEqual(gastos.map((g) => [g.descripcion, g.importe, g.categoria_id]), [
+    ['SUPERMERCADO LA ESQUINA', 1250.5, 'comida'],
+    ['FARMACIA DEL AHORRO', 450, 'salud'],
+  ]);
+});
+
+test('detecta duplicados exactos sin depender de acentos o mayúsculas', () => {
+  assert.equal(esDuplicado(
+    { fecha: '2026-09-20', importe: 450, descripcion: 'Farmacia México' },
+    [{ fecha: '2026-09-20', importe: 450, descripcion: 'FARMACIA MEXICO' }],
+  ), true);
 });

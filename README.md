@@ -34,6 +34,7 @@ Escanea el código QR con **Expo Go** en tu teléfono. Todas las librerías que 
 | --- | --- |
 | Hoja **Resumen** (año, mes, presupuesto, totales, tabla anual) | Pestaña **Resumen**. El mes se cambia con las flechas y se comparte entre pestañas. |
 | Hoja **Gastos** | Pestaña **Movimientos** y formulario `movimiento.tsx` |
+| Estados de cuenta PDF | **Movimientos → Cargar estado de cuenta PDF**. Extrae cargos, sugiere categorías, marca duplicados y pide confirmación antes de guardar. |
 | Hoja **Acciones** y cartera del Resumen | Pestaña **Acciones** y formulario `operacion.tsx`. Los tickers aparecen solos, ya no hay que escribirlos en el Resumen. |
 | Celda "Presupuesto del mes" | Pestaña **Presupuesto**, ahora también por categoría |
 | Estado "Revisar datos" | Reglas `check` en la base de datos: los datos inválidos no se pueden guardar |
@@ -75,3 +76,5 @@ Tiene los mismos límites que el Excel:
 - No calcula impuestos.
 
 Tampoco permite crear categorías nuevas desde la app todavía. Puedes agregarlas en la tabla `categorias` desde Supabase.
+
+La importación admite PDFs digitales con texto (hasta 20 MB y 40 páginas). Los estados escaneados como imagen necesitan OCR y no se importan automáticamente. Como los bancos usan formatos distintos, la pantalla siempre muestra una revisión previa para corregir categorías o excluir filas antes de guardar.

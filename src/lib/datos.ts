@@ -77,6 +77,13 @@ export async function guardarMovimiento(m: MovimientoNuevo, id?: string) {
   if (error) lanzar(error);
 }
 
+/** Guarda una importación completa en una sola operación: o entra todo o no entra nada. */
+export async function guardarMovimientos(movimientos: MovimientoNuevo[]) {
+  if (!movimientos.length) return;
+  const { error } = await supabase.from('movimientos').insert(movimientos);
+  if (error) lanzar(error);
+}
+
 export async function borrarMovimiento(id: string) {
   const { error } = await supabase.from('movimientos').delete().eq('id', id);
   if (error) lanzar(error);

@@ -37,6 +37,7 @@ function Navegacion() {
       <Stack.Protected guard={!!sesion}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="movimiento" options={{ presentation: 'modal', headerShown: true }} />
+        <Stack.Screen name="importar-estado" options={{ presentation: 'modal', headerShown: true, title: 'Importar estado de cuenta' }} />
         <Stack.Screen name="operacion" options={{ presentation: 'modal', headerShown: true }} />
       </Stack.Protected>
       <Stack.Protected guard={!sesion}>
