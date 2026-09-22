@@ -46,7 +46,8 @@ function leerFecha(linea: string, anioPredeterminado: number): { fecha: string; 
     return fecha ? { fecha, fin: numerica[0].length } : null;
   }
 
-  const texto = linea.match(/^\s*(\d{1,2})\s+(?:de\s+)?([a-záéíóú]{3,12})(?:\s+(?:de\s+)?(\d{2,4}))?\b/i);
+  // Acepta "18 ago 2026", "18 de agosto de 2026" y el formato BBVA "18-ago-2026".
+  const texto = linea.match(/^\s*(\d{1,2})(?:\s+(?:de\s+)?|\s*-\s*)([a-záéíóú]{3,12})(?:(?:\s+(?:de\s+)?|\s*-\s*)(\d{2,4}))?\b/i);
   if (!texto) return null;
   const mes = MESES[sinAcentos(texto[2])];
   if (!mes) return null;
@@ -56,9 +57,9 @@ function leerFecha(linea: string, anioPredeterminado: number): { fecha: string; 
   return fecha ? { fecha, fin: texto[0].length } : null;
 }
 
-function leerImporte(linea: string): { importe: number; inicio: number } | null {
+function leerImporte(linea: string): { importe: number; inicio: number; negativo: boolean } | null {
   // Exige centavos, separador de miles o signo de moneda para no confundir folios con importes.
-  const patron = /(?:\$|MXN\s*)?\(?-?\s*\d{1,3}(?:[ ,]\d{3})*(?:\.\d{2})\)?|-?\s*\$?\s*\d+\.\d{2}/gi;
+  const patron = /[+-]?\s*(?:\$|MXN\s*)?\s*\(?\s*(?:\d{1,3}(?:[ ,]\d{3})+|\d+)\.\d{2}\)?/gi;
   const hallados = [...linea.matchAll(patron)].filter((m) => m.index !== undefined);
   if (!hallados.length) return null;
 
@@ -67,15 +68,16 @@ function leerImporte(linea: string): { importe: number; inicio: number } | null 
   const elegido = hallados[0];
   const limpio = elegido[0].replace(/[\s,$()]/g, '');
   const importe = Math.abs(Number(limpio));
-  return Number.isFinite(importe) && importe > 0 ? { importe, inicio: elegido.index! } : null;
+  const negativo = elegido[0].trimStart().startsWith('-') || /\(.*\)/.test(elegido[0]);
+  return Number.isFinite(importe) && importe > 0 ? { importe, inicio: elegido.index!, negativo } : null;
 }
 
 function categoriaSugerida(descripcion: string, categorias: Categoria[]): string {
   const d = sinAcentos(descripcion);
   const reglas: Array<[RegExp, string[]]> = [
-    [/farmacia|medic|hospital|doctor|laborator|clinica/, ['Salud']],
+    [/\bfarm(?:acia)?\b|medic|hospital|doctor|laborator|clinica/, ['Salud']],
     [/uber|didi|gasolin|pemex|metro|autobus|estacionamiento|caseta/, ['Transporte']],
-    [/super|walmart|soriana|chedraui|oxxo|restaur|cafe|comida|rappi|uber eats|didi food/, ['Comida']],
+    [/super|wal\s*mart|soriana|chedraui|oxxo|restaur|\brest\b|\bmcd\b|subway|cafe|comida|rappi|uber eats|didi food/, ['Comida']],
     [/cfe|telmex|izzi|totalplay|internet|telefon|agua|gas natural|netflix|spotify/, ['Servicios']],
     [/renta|hipoteca|mantenimiento|condominio|inmobili/, ['Vivienda']],
     [/cine|teatro|juego|steam|ticketmaster|entretenimiento/, ['Entretenimiento']],
@@ -102,14 +104,23 @@ export function extraerGastosDeTexto(texto: string, categorias: Categoria[], ani
   const anioDetectado = aniosMencionados.length
     ? [...new Set(aniosMencionados)].sort((a, b) => aniosMencionados.filter((x) => x === b).length - aniosMencionados.filter((x) => x === a).length)[0]
     : anioPredeterminado;
+  const esEstadoTarjetaCredito = /tarjeta de cr[eé]dito|cargos\s*,?\s*compras y abonos regulares/i.test(texto);
 
   lineas.forEach((linea, indice) => {
     const fecha = leerFecha(linea, anioDetectado);
     if (!fecha || PALABRAS_NO_MOVIMIENTO.test(linea) || PALABRAS_INGRESO.test(linea)) return;
-    const monto = leerImporte(linea.slice(fecha.fin));
+    let resto = linea.slice(fecha.fin);
+    // Algunos estados incluyen fecha de operación y fecha de cargo antes del comercio.
+    const segundaFecha = leerFecha(resto, anioDetectado);
+    if (segundaFecha) resto = resto.slice(segundaFecha.fin);
+    const monto = leerImporte(resto);
     if (!monto) return;
-    const resto = linea.slice(fecha.fin);
-    const descripcion = resto.slice(0, monto.inicio).replace(/^\s*[-|:]\s*/, '').trim();
+    // En tarjetas de crédito BBVA, '+' es una compra y '-' es pago/abono.
+    if (esEstadoTarjetaCredito && monto.negativo) return;
+    const descripcion = resto.slice(0, monto.inicio)
+      .replace(/^\s*[-|:]\s*/, '')
+      .replace(/\s+[+-]\s*$/, '')
+      .trim();
     if (descripcion.length < 2) return;
     gastos.push({
       id: `${fecha.fecha}-${indice}-${monto.importe}`,

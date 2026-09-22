@@ -117,3 +117,23 @@ test('detecta duplicados exactos sin depender de acentos o mayúsculas', () => {
     [{ fecha: '2026-09-20', importe: 450, descripcion: 'FARMACIA MEXICO' }],
   ), true);
 });
+
+test('entiende movimientos de tarjeta BBVA con dos fechas y excluye pagos', () => {
+  const categorias: Categoria[] = [
+    { id: 'comida', nombre: 'Comida', tipo: 'Gasto', orden: 1 },
+    { id: 'salud', nombre: 'Salud', tipo: 'Gasto', orden: 2 },
+    { id: 'otros', nombre: 'Otros', tipo: 'Gasto', orden: 3 },
+  ];
+  const gastos = extraerGastosDeTexto(`
+    TARJETA DE CRÉDITO
+    CARGOS, COMPRAS Y ABONOS REGULARES (NO A MESES)
+    Fecha de la operación Fecha de cargo Descripción del movimiento Monto
+    03-ago-2026 04-ago-2026 FARM SIMILARES SUC 123 + $450.00
+    05-ago-2026 05-ago-2026 BMOVIL.PAGO TDC - $2,000.00
+  `, categorias, 2026);
+  assert.equal(gastos.length, 1);
+  assert.equal(gastos[0].fecha, '2026-08-03');
+  assert.equal(gastos[0].descripcion, 'FARM SIMILARES SUC 123');
+  assert.equal(gastos[0].importe, 450);
+  assert.equal(gastos[0].categoria_id, 'salud');
+});
