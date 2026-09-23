@@ -211,7 +211,7 @@ export default function Usuario() {
           titulo={exportando === 'dividendos' ? 'Preparando…' : 'Exportar dividendos'}
           variante="secundario"
           onPress={() => exportar('dividendos')}
-          deshabilitado={!!exportando}
+          deshabilitado={!!exportando || !datos?.dividendos}
           estilo={{ marginTop: espacio.s }}
         />
       </Seccion>
