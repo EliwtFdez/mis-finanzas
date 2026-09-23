@@ -1,0 +1,50 @@
+name: Despliegue
+
+# Cuando el CI pasa en main, aplica las migraciones nuevas a Supabase.
+# Necesita estos secretos del repositorio (Settings → Secrets and variables → Actions):
+#   SUPABASE_ACCESS_TOKEN  token personal (supabase.com → Account → Access Tokens)
+#   SUPABASE_PROJECT_REF   el identificador del proyecto (el "xxxx" de https://xxxx.supabase.co)
+#   SUPABASE_DB_PASSWORD   la contraseña de la base de datos del proyecto
+# Sin esos secretos el paso se omite y el workflow termina en verde.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: despliegue
+  cancel-in-progress: false
+
+jobs:
+  migraciones:
+    name: Migraciones de Supabase
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Revisar secretos
+        id: secretos
+        run: |
+          if [[ -n "$SUPABASE_ACCESS_TOKEN" && -n "$SUPABASE_PROJECT_REF" && -n "$SUPABASE_DB_PASSWORD" ]]; then
+            echo "listos=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Faltan secretos de Supabase; no se aplican migraciones."
+          fi
+      - uses: supabase/setup-cli@v1
+        if: steps.secretos.outputs.listos == 'true'
+        with:
+          version: latest
+      - name: Aplicar migraciones
+        if: steps.secretos.outputs.listos == 'true'
+        run: |
+          supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+          supabase db push --password "$SUPABASE_DB_PASSWORD"

@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: App (tipos, pruebas y bundle)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      # Empaqueta el JavaScript como en una build real: detecta imports rotos o módulos que faltan.
+      - name: Bundle iOS y Android
+        run: npx expo export --platform ios --platform android --output-dir dist
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://ci.supabase.co
+          EXPO_PUBLIC_SUPABASE_KEY: sb_publishable_ci
+
+  base-de-datos:
+    name: Base de datos (migraciones y pruebas SQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/probar-sql.sh
