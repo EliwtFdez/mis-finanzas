@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SesionProvider, useSesion } from '@/lib/sesion';
+import { BloqueoProvider } from '@/lib/bloqueo';
 import { PeriodoProvider } from '@/lib/periodo';
 import { Cargando } from '@/components/ui';
 import { colores } from '@/lib/tema';
@@ -9,12 +10,14 @@ import { colores } from '@/lib/tema';
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <SesionProvider>
-        <PeriodoProvider>
-          <StatusBar style="dark" />
-          <Navegacion />
-        </PeriodoProvider>
-      </SesionProvider>
+      <BloqueoProvider>
+        <SesionProvider>
+          <PeriodoProvider>
+            <StatusBar style="dark" />
+            <Navegacion />
+          </PeriodoProvider>
+        </SesionProvider>
+      </BloqueoProvider>
     </SafeAreaProvider>
   );
 }

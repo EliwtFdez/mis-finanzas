@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSesion } from '@/lib/sesion';
+import { useBloqueo } from '@/lib/bloqueo';
 import { supabase } from '@/lib/supabase';
 import { borrarTodosMisDatos, cargarResumenDatosUsuario, guardarPerfil, mensajeError, perfilDe } from '@/lib/datos';
 import { useCarga } from '@/lib/useCarga';
@@ -16,6 +17,7 @@ function fechaCuenta(fecha?: string) {
 export default function Usuario() {
   const router = useRouter();
   const { sesion } = useSesion();
+  const bloqueo = useBloqueo();
   const { datos, error: errorCarga, recargar } = useCarga(cargarResumenDatosUsuario, []);
   const [confirmando, setConfirmando] = useState(false);
   const [confirmacion, setConfirmacion] = useState('');
@@ -144,7 +146,25 @@ export default function Usuario() {
       {(errorCarga || error) && <MensajeError>{errorCarga ?? error}</MensajeError>}
       {!!aviso && <Text style={estilos.aviso}>{aviso}</Text>}
 
-      <Seccion titulo="Sesión">
+      <Seccion titulo="Seguridad">
+        {bloqueo.disponible ? (
+          <View style={estilos.interruptor}>
+            <View style={{ flex: 1 }}>
+              <Text style={texto.cuerpo}>Bloquear con Face ID o huella</Text>
+              <Text style={texto.nota}>Se pide al abrir la app y al volver después de 30 segundos.</Text>
+            </View>
+            <Switch
+              value={bloqueo.activo}
+              onValueChange={(v) => void bloqueo.cambiar(v)}
+              trackColor={{ false: colores.linea, true: colores.verdeClaro }}
+              thumbColor={bloqueo.activo ? colores.verde : '#FFFFFF'}
+            />
+          </View>
+        ) : (
+          <Text style={[texto.nota, { paddingVertical: espacio.m }]}>
+            Configura Face ID o huella en tu teléfono para poder bloquear la app.
+          </Text>
+        )}
         <View style={{ paddingTop: espacio.m }}>
           <Boton titulo="Cerrar sesión" variante="secundario" onPress={cerrarSesion} deshabilitado={procesando} />
         </View>
@@ -203,6 +223,7 @@ export default function Usuario() {
 }
 
 const estilos = StyleSheet.create({
+  interruptor: { flexDirection: 'row', alignItems: 'center', gap: espacio.m, paddingVertical: espacio.m },
   peligro: {
     marginTop: espacio.m,
     padding: espacio.l,
