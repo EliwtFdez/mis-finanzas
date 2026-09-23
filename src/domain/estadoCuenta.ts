@@ -1,5 +1,8 @@
 import type { Categoria } from './finanzas';
 
+/** Nota con la que el atajo de Apple Pay marca sus gastos (ver migración atajos_apple_pay). */
+export const NOTA_APPLE_PAY = 'Registrado con Apple Pay';
+
 export interface GastoExtraido {
   id: string;
   fecha: string;
@@ -143,4 +146,31 @@ export function esDuplicado(gasto: Pick<GastoExtraido, 'fecha' | 'importe' | 'de
     const otra = sinAcentos(m.descripcion ?? '').replace(/\W/g, '');
     return m.fecha === gasto.fecha && Math.abs(m.importe - gasto.importe) < 0.005 && (!!descripcion && descripcion === otra);
   });
+}
+
+const diasEntre = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
+
+/**
+ * Empareja cada gasto del PDF con, a lo más, un pago ya registrado por Apple Pay.
+ * El comercio se escribe distinto en el banco y en Apple Pay, así que se compara
+ * importe exacto y fecha a 2 días o menos (el banco puede aplicar el cargo después).
+ */
+export function emparejarApplePay<E extends { id: string; fecha: string; importe: number; notas: string | null }>(
+  gastos: Array<Pick<GastoExtraido, 'id' | 'fecha' | 'importe'>>,
+  existentes: E[],
+): Map<string, E> {
+  const libres = existentes.filter((m) => m.notas === NOTA_APPLE_PAY);
+  const pares = new Map<string, E>();
+  for (const g of [...gastos].sort((a, b) => a.fecha.localeCompare(b.fecha))) {
+    let mejor: E | undefined;
+    for (const m of libres) {
+      if (Math.abs(m.importe - g.importe) >= 0.005 || diasEntre(m.fecha, g.fecha) > 2) continue;
+      if (!mejor || diasEntre(m.fecha, g.fecha) < diasEntre(mejor.fecha, g.fecha)) mejor = m;
+    }
+    if (mejor) {
+      pares.set(g.id, mejor);
+      libres.splice(libres.indexOf(mejor), 1);
+    }
+  }
+  return pares;
 }

@@ -41,3 +41,7 @@ yarn-error.*
 /android
 
 .env
+
+# Estados de cuenta de ejemplo para probar lectores de PDF (datos personales)
+muestras/
+*.pdf

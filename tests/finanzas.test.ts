@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { calcularCartera, resumenMes, resumenAnual, type Operacion, type Categoria, type Movimiento } from '../src/domain/finanzas.ts';
-import { esDuplicado, extraerGastosDeTexto } from '../src/domain/estadoCuenta.ts';
+import { emparejarApplePay, esDuplicado, extraerGastosDeTexto, NOTA_APPLE_PAY } from '../src/domain/estadoCuenta.ts';
 import { reconstruirTextoPdf } from '../src/domain/textoPdf.ts';
 
 const op = (o: Partial<Operacion> & Pick<Operacion, 'fecha' | 'tipo' | 'cantidad' | 'precio'>): Operacion => ({
@@ -178,4 +178,20 @@ test('marca importes en la columna ABONOS aunque la descripción parezca un pago
     { str: '400.00', x: 432, y: 180 },
   ]]);
   assert.match(texto, /PAGO CUENTA DE TERCERO 400\.00 \[ABONO\]/);
+});
+
+test('empareja cada gasto del PDF con un solo pago de Apple Pay por importe y fecha cercana', () => {
+  const pares = emparejarApplePay(
+    [
+      { id: 'a', fecha: '2026-09-10', importe: 29 },
+      { id: 'b', fecha: '2026-09-10', importe: 29 },
+      { id: 'c', fecha: '2026-09-20', importe: 158 },
+    ],
+    [
+      { id: 'ap1', fecha: '2026-09-09', importe: 29, notas: NOTA_APPLE_PAY },
+      { id: 'manual', fecha: '2026-09-10', importe: 29, notas: null },
+      { id: 'ap2', fecha: '2026-09-15', importe: 158, notas: NOTA_APPLE_PAY },
+    ],
+  );
+  assert.deepEqual([...pares].map(([g, m]) => [g, m.id]), [['a', 'ap1']]);
 });

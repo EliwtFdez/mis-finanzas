@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSesion } from '@/lib/sesion';
 import { supabase } from '@/lib/supabase';
 import { borrarTodosMisDatos, cargarResumenDatosUsuario, guardarPerfil, mensajeError, perfilDe } from '@/lib/datos';
@@ -13,6 +14,7 @@ function fechaCuenta(fecha?: string) {
 }
 
 export default function Usuario() {
+  const router = useRouter();
   const { sesion } = useSesion();
   const { datos, error: errorCarga, recargar } = useCarga(cargarResumenDatosUsuario, []);
   const [confirmando, setConfirmando] = useState(false);
@@ -129,6 +131,14 @@ export default function Usuario() {
         <Renglon izquierda="Movimientos" derecha={String(datos?.movimientos ?? '…')} />
         <Renglon izquierda="Operaciones de acciones" derecha={String(datos?.operaciones ?? '…')} />
         <Renglon izquierda="Presupuestos" derecha={String(datos?.presupuestos ?? '…')} />
+      </Seccion>
+
+      <Seccion titulo="Registro automático">
+        <Renglon
+          izquierda="Apple Pay con Atajos ›"
+          detalle="Registra cada pago del iPhone como gasto"
+          onPress={() => router.push('/atajos')}
+        />
       </Seccion>
 
       {(errorCarga || error) && <MensajeError>{errorCarga ?? error}</MensajeError>}

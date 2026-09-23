@@ -138,6 +138,31 @@ export async function guardarPerfil(p: Perfil) {
   if (error) lanzar(error);
 }
 
+// ─── Atajos de iPhone (Apple Pay) ─────────────────────────────
+
+export interface EstadoAtajos {
+  created_at: string;
+  ultimo_uso: string | null;
+}
+
+export async function cargarEstadoAtajos(): Promise<EstadoAtajos | null> {
+  const { data, error } = await supabase.from('tokens_atajo').select('created_at, ultimo_uso').maybeSingle();
+  if (error) lanzar(error);
+  return data;
+}
+
+/** Crea un código nuevo (el anterior deja de funcionar). Solo se puede ver esta vez. */
+export async function generarCodigoAtajos(): Promise<string> {
+  const { data, error } = await supabase.rpc('generar_token_atajo');
+  if (error) lanzar(error);
+  return data as string;
+}
+
+export async function desconectarAtajos(userId: string) {
+  const { error } = await supabase.from('tokens_atajo').delete().eq('user_id', userId);
+  if (error) lanzar(error);
+}
+
 /** Borra todos los datos financieros de la sesión en una sola transacción. */
 export async function borrarTodosMisDatos() {
   const { error } = await supabase.rpc('borrar_todos_mis_datos');
