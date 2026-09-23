@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { calcularCartera, nivelPresupuesto, resumenAnual, resumenMes, type NivelPresupuesto } from '@/domain/finanzas';
+import { calcularCartera, nivelPresupuesto, repartoGastos, resumenAnual, resumenMes, type NivelPresupuesto } from '@/domain/finanzas';
 import { estadoMetas } from '@/domain/metas';
 import { estadoMsi } from '@/domain/msi';
 import { proximosDelMes } from '@/domain/recurrentes';
@@ -20,7 +20,7 @@ import { aPesos, aPesosCortos, fechaDeCorte, fechaLegible, hoy, MESES_CORTOS } f
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
-import { Barra, BotonFlotante, Cifra, IconoCategoria, MensajeError, Pantalla, Renglon, Seccion, Vacio } from '@/components/ui';
+import { Barra, BarraReparto, BotonFlotante, Cifra, IconoCategoria, MensajeError, Pantalla, Renglon, Seccion, Vacio } from '@/components/ui';
 
 export default function Resumen() {
   const router = useRouter();
@@ -107,6 +107,7 @@ export default function Resumen() {
 
           <Seccion titulo="Gastos por categoría">
             {lineas.length === 0 && <Vacio>Aún no hay gastos este mes.</Vacio>}
+            {r.gastos > 0 && <BarraReparto segmentos={repartoGastos(r.porCategoria)} />}
             {lineas.map((l) => {
               const nivel = nivelPresupuesto(l.gastado, l.presupuesto);
               return (

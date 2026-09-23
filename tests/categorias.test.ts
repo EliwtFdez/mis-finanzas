@@ -54,19 +54,19 @@ test('la apariencia usa el emoji o, si no hay, la inicial en gris', () => {
 });
 
 test('sugiere el color menos usado entre las categorías del mismo tipo', () => {
-  const [verde, turquesa, azul] = PALETA_CATEGORIAS;
-  assert.equal(colorSugerido([], 'Gasto'), verde);
+  const [azul, naranja, aqua] = PALETA_CATEGORIAS;
+  assert.equal(colorSugerido([], 'Gasto'), azul);
   assert.equal(
     colorSugerido(
       [
-        { tipo: 'Gasto', color: verde },
-        { tipo: 'Gasto', color: turquesa },
-        { tipo: 'Ingreso', color: azul }, // otro tipo, no cuenta
+        { tipo: 'Gasto', color: azul },
+        { tipo: 'Gasto', color: naranja },
+        { tipo: 'Ingreso', color: aqua }, // otro tipo, no cuenta
         { tipo: 'Gasto', color: null },
       ],
       'Gasto',
     ),
-    azul,
+    aqua,
   );
 });
 

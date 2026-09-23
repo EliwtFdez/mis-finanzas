@@ -282,6 +282,30 @@ export function resumenMes(params: {
   };
 }
 
+export interface SegmentoReparto {
+  /** null = «Otras»: las categorías que no caben. */
+  categoria: Categoria | null;
+  gastado: number;
+  /** 0 a 1 del gasto del mes. */
+  proporcion: number;
+}
+
+/**
+ * En qué se fue el dinero del mes: categorías con gasto de mayor a menor. Pasadas `maximo`,
+ * el resto se junta en «Otras» para no pintar más colores de los que se distinguen.
+ */
+export function repartoGastos(lineas: LineaCategoria[], maximo = 5): SegmentoReparto[] {
+  const conGasto = lineas.filter((l) => l.gastado > 0).sort((a, b) => b.gastado - a.gastado);
+  const total = conGasto.reduce((s, l) => s + l.gastado, 0);
+  if (total <= 0) return [];
+  // Si solo sobra una, se muestra tal cual: «Otras» con una sola categoría no aporta.
+  const visibles = conGasto.length > maximo + 1 ? conGasto.slice(0, maximo) : conGasto;
+  const resto = redondear(conGasto.slice(visibles.length).reduce((s, l) => s + l.gastado, 0));
+  const segmentos: SegmentoReparto[] = visibles.map((l) => ({ categoria: l.categoria, gastado: l.gastado, proporcion: l.gastado / total }));
+  if (resto > 0) segmentos.push({ categoria: null, gastado: resto, proporcion: resto / total });
+  return segmentos;
+}
+
 /** Tabla de 12 meses del Resumen. */
 export function resumenAnual(anio: number, movimientos: Movimiento[]) {
   return Array.from({ length: 12 }, (_, i) => {

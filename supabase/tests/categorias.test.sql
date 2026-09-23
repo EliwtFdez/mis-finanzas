@@ -26,12 +26,12 @@ select pruebas.afirmar((select count(*) from categorias) = 12, 'se puede borrar 
 
 -- Ícono y color
 select pruebas.afirmar(
-  (select icono = '🍽️' and color = '#2F6B4F' from categorias where nombre = 'Comida'),
+  (select icono = '🍽️' and color = '#008300' from categorias where nombre = 'Comida'),
   'las categorías iniciales traen ícono y color');
 select pruebas.afirmar(
   (select icono is null and color is null from categorias where nombre = 'Mascotas y veterinario'),
   'una categoría nueva puede quedar sin ícono ni color');
-update categorias set icono = '🐾', color = '#A8487A' where nombre = 'Mascotas y veterinario';
+update categorias set icono = '🐾', color = '#E87BA4' where nombre = 'Mascotas y veterinario';
 select pruebas.espera_error($$update categorias set color = 'rojo' where nombre = 'Comida'$$, 'categorias_color_check');
 select pruebas.espera_error($$update categorias set color = '#b3362b' where nombre = 'Comida'$$, 'categorias_color_check');
 select pruebas.espera_error($$update categorias set icono = '' where nombre = 'Comida'$$, 'categorias_icono_check');

@@ -35,10 +35,15 @@ export const siguienteOrden = (categorias: Pick<Categoria, 'orden'>[]) => Math.m
 
 // ─── Ícono y color ───────────────────────────────────────────
 
-/** Sin rojo ni ámbar: en la app esos colores significan presupuesto al límite. */
-export const PALETA_CATEGORIAS = ['#2F6B4F', '#1F8A8A', '#3A6EA5', '#4B5BA6', '#7A4E9C', '#A8487A', '#8A6A4A', '#5B6F66'] as const;
+/**
+ * Paleta categórica validada (skill dataviz, orden fijo): pasa separación para daltonismo y visión normal
+ * entre vecinos. Sin rojo ni amarillo: en la app significan presupuesto al límite. Con 6 colores
+ * no se distinguen todos los pares entre sí, así que el color nunca va solo: siempre con emoji y nombre.
+ */
+export const PALETA_CATEGORIAS = ['#2A78D6', '#EB6834', '#1BAF7A', '#E87BA4', '#008300', '#4A3AA7'] as const;
 
-export const GRIS_CATEGORIA = '#5B6F66';
+/** Neutro para categorías sin color y para «Otras». */
+export const GRIS_CATEGORIA = '#8A948F';
 
 export const ICONOS_CATEGORIAS = [
   '🏠', '🍽️', '🛒', '☕', '🚗', '⛽', '🚌', '✈️',

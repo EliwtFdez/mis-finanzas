@@ -16,8 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colores, espacio, texto } from '@/lib/tema';
 import { MESES, aPesos, fechaATexto, fechaLegible, textoAFecha } from '@/lib/formato';
 import { usePeriodo } from '@/lib/periodo';
-import { aparienciaCategoria } from '@/domain/categorias';
-import type { Categoria } from '@/domain/finanzas';
+import { aparienciaCategoria, GRIS_CATEGORIA } from '@/domain/categorias';
+import type { Categoria, SegmentoReparto } from '@/domain/finanzas';
 
 // ─── Estructura de pantalla ───────────────────────────────────
 
@@ -177,7 +177,43 @@ export function IconoCategoria({ categoria, tamano = 28 }: { categoria: Pick<Cat
       }}
       accessible={false}
     >
-      <Text style={{ fontSize: tamano * (a.esEmoji ? 0.5 : 0.45), fontWeight: '700', color: a.color }}>{a.simbolo}</Text>
+      <Text style={{ fontSize: tamano * (a.esEmoji ? 0.5 : 0.45), fontWeight: '700', color: colores.tinta }}>{a.simbolo}</Text>
+    </View>
+  );
+}
+
+const porcentaje = (p: number) => (p > 0 && p < 0.01 ? '<1' : String(Math.round(p * 100)));
+
+/**
+ * Barra apilada de parte-del-total con leyenda en el mismo orden. El color nunca va solo:
+ * cada segmento se nombra con emoji, nombre y porcentaje (la paleta no separa todos los pares).
+ */
+export function BarraReparto({ segmentos }: { segmentos: SegmentoReparto[] }) {
+  const nombre = (s: SegmentoReparto) => s.categoria?.nombre ?? 'Otras';
+  const color = (s: SegmentoReparto) => (s.categoria ? aparienciaCategoria(s.categoria).color : GRIS_CATEGORIA);
+  return (
+    <View style={{ paddingTop: espacio.m }}>
+      <View
+        style={estilos.reparto}
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={`Reparto del gasto: ${segmentos.map((s) => `${nombre(s)} ${porcentaje(s.proporcion)}%`).join(', ')}`}
+      >
+        {segmentos.map((s) => (
+          <View key={s.categoria?.id ?? 'otras'} style={{ flex: s.proporcion, minWidth: 3, backgroundColor: color(s) }} />
+        ))}
+      </View>
+      <View style={estilos.repartoLeyenda} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        {segmentos.map((s) => (
+          <View key={s.categoria?.id ?? 'otras'} style={estilos.repartoEtiqueta}>
+            <View style={[estilos.repartoMuestra, { backgroundColor: color(s) }]} />
+            <Text style={texto.nota}>
+              {s.categoria?.icono ? `${s.categoria.icono} ` : ''}
+              {nombre(s)} <Text style={{ color: colores.tinta, fontWeight: '600' }}>{porcentaje(s.proporcion)}%</Text>
+            </Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -351,6 +387,11 @@ const estilos = StyleSheet.create({
   flechaTexto: { fontSize: 24, color: colores.verde, lineHeight: 26 },
   mesTexto: { fontSize: 15, fontWeight: '600', color: colores.tinta, minWidth: 116, textAlign: 'center' },
   seccion: { marginTop: espacio.xl },
+  // 2px de separación entre segmentos y extremos redondeados de 4px (skill dataviz).
+  reparto: { flexDirection: 'row', gap: 2, height: 12, borderRadius: 4, overflow: 'hidden' },
+  repartoLeyenda: { flexDirection: 'row', flexWrap: 'wrap', columnGap: espacio.m, rowGap: 4, marginTop: espacio.s },
+  repartoEtiqueta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  repartoMuestra: { width: 10, height: 10, borderRadius: 2 },
   seccionEncabezado: {
     flexDirection: 'row',
     justifyContent: 'space-between',
