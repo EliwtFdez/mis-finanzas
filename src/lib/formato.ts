@@ -27,6 +27,13 @@ export const textoAFecha = (s: string) => {
 
 export const hoy = () => fechaATexto(new Date());
 
+/** Hoy si el mes elegido es el actual; si no, el último día de ese mes. */
+export function fechaDeCorte(anio: number, mes: number) {
+  const hoyTexto = hoy();
+  if (hoyTexto.startsWith(`${anio}-${String(mes).padStart(2, '0')}`)) return hoyTexto;
+  return fechaATexto(new Date(anio, mes, 0));
+}
+
 /** "2026-09-21" → "21 sep 2026" */
 export function fechaLegible(s: string, conAnio = false) {
   const [a, m, d] = s.split('-').map(Number);

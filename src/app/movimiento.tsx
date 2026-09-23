@@ -25,6 +25,7 @@ export default function FormularioMovimiento() {
   const [medio, setMedio] = useState<(typeof MEDIOS)[number] | null>(null);
   const [cuenta, setCuenta] = useState('');
   const [notas, setNotas] = useState('');
+  const [pagoMsi, setPagoMsi] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
 
@@ -44,6 +45,7 @@ export default function FormularioMovimiento() {
           setMedio((m.medio_pago as (typeof MEDIOS)[number]) ?? null);
           setCuenta(m.cuenta ?? '');
           setNotas(m.notas ?? '');
+          if (m.compra_msi_id) setPagoMsi(`Mensualidad ${m.numero_pago ?? ''} de una compra a meses sin intereses. Para borrar toda la compra, ve a Movimientos → Meses sin intereses.`);
         }
       } catch (e) {
         setError((e as Error).message);
@@ -110,6 +112,7 @@ export default function FormularioMovimiento() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: id ? 'Editar movimiento' : 'Nuevo movimiento' }} />
       <ScrollView contentContainerStyle={{ padding: espacio.l, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
+        {pagoMsi && <Text style={[texto.nota, { marginBottom: espacio.l, backgroundColor: colores.verdeClaro, padding: espacio.s }]}>{pagoMsi}</Text>}
         <Opciones opciones={TIPOS} valor={tipo} onCambio={cambiarTipo} />
 
         <Campo

@@ -25,6 +25,9 @@ export interface Movimiento {
   notas: string | null;
   /** Llegó de Apple Pay sin categoría conocida y espera que el usuario la elija. */
   por_revisar?: boolean;
+  /** Mensualidad de una compra a meses sin intereses. */
+  compra_msi_id?: string | null;
+  numero_pago?: number | null;
   created_at?: string;
 }
 

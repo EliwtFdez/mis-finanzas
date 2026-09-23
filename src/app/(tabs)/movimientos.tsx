@@ -69,11 +69,10 @@ export default function Movimientos() {
         <Opciones opciones={FILTROS} valor={filtro} onCambio={setFiltro} />
       </View>
 
-      <Boton
-        titulo="Cargar estado de cuenta PDF"
-        variante="secundario"
-        onPress={() => router.push('/importar-estado')}
-      />
+      <View style={estilos.acciones}>
+        <Boton titulo="Cargar estado PDF" variante="secundario" onPress={() => router.push('/importar-estado')} estilo={{ flex: 1 }} />
+        <Boton titulo="Meses sin intereses" variante="secundario" onPress={() => router.push('/msi')} estilo={{ flex: 1 }} />
+      </View>
 
       {datos && buscando && delMes.length === 0 && <Vacio>Nada coincide con «{consulta.trim()}» en {anio}.</Vacio>}
       {datos && !buscando && delMes.length === 0 && (
@@ -98,7 +97,7 @@ export default function Movimientos() {
                   detalle={detalle}
                   derecha={(m.tipo === 'Gasto' ? '−' : '+') + aPesos(m.importe)}
                   derechaColor={m.tipo === 'Gasto' ? colores.tinta : colores.verde}
-                  aviso={m.por_revisar ? 'Por revisar: elige su categoría' : undefined}
+                  aviso={m.por_revisar ? 'Por revisar: elige su categoría' : m.compra_msi_id ? 'Mensualidad a meses sin intereses' : undefined}
                   onPress={() => router.push({ pathname: '/movimiento', params: { id: m.id } })}
                 />
               );
@@ -122,5 +121,6 @@ const estilos = StyleSheet.create({
     borderColor: colores.linea,
     borderRadius: 10,
   },
+  acciones: { flexDirection: 'row', gap: espacio.s },
   buscadorTexto: { flex: 1, paddingVertical: 10, fontSize: 15, color: colores.tinta },
 });

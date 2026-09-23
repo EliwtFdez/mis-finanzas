@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { Categoria, Movimiento, Operacion, Presupuesto } from '@/domain/finanzas';
+import type { CompraMsi } from '@/domain/msi';
 
 // PostgREST devuelve numeric como número, pero lo normalizamos por si llega como texto.
 const num = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
@@ -131,6 +132,39 @@ export async function marcarRevisados(ids: string[], categoria_id: string | null
   if (!ids.length) return;
   const cambios = categoria_id ? { categoria_id, por_revisar: false } : { por_revisar: false };
   const { error } = await supabase.from('movimientos').update(cambios).in('id', ids);
+  if (error) lanzar(error);
+}
+
+// ─── Meses sin intereses ──────────────────────────────────────
+
+export async function cargarComprasMsi(): Promise<CompraMsi[]> {
+  const { data, error } = await supabase
+    .from('compras_msi')
+    .select('id, fecha, descripcion, importe_total, meses, categoria_id, cuenta, pagos:movimientos(fecha, importe)')
+    .order('fecha', { ascending: false });
+  if (error) lanzar(error);
+  return (data ?? []).map((r) => ({
+    ...(r as unknown as CompraMsi),
+    importe_total: num(r.importe_total),
+    pagos: ((r.pagos ?? []) as Array<{ fecha: string; importe: unknown }>).map((p) => ({ fecha: p.fecha, importe: num(p.importe) })),
+  }));
+}
+
+export async function crearCompraMsi(c: Omit<CompraMsi, 'id' | 'pagos'>) {
+  const { error } = await supabase.rpc('crear_compra_msi', {
+    p_fecha: c.fecha,
+    p_descripcion: c.descripcion,
+    p_importe_total: c.importe_total,
+    p_meses: c.meses,
+    p_categoria_id: c.categoria_id,
+    p_cuenta: c.cuenta,
+  });
+  if (error) lanzar(error);
+}
+
+/** Borra la compra y todas sus mensualidades. */
+export async function borrarCompraMsi(id: string) {
+  const { error } = await supabase.from('compras_msi').delete().eq('id', id);
   if (error) lanzar(error);
 }
 

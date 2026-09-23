@@ -1,8 +1,9 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { calcularCartera, resumenAnual, resumenMes } from '@/domain/finanzas';
-import { cargarCategorias, cargarMovimientosDelAnio, cargarOperaciones, cargarPresupuestos, contarPorRevisar } from '@/lib/datos';
-import { aPesos, aPesosCortos, MESES_CORTOS } from '@/lib/formato';
+import { estadoMsi } from '@/domain/msi';
+import { cargarCategorias, cargarComprasMsi, cargarMovimientosDelAnio, cargarOperaciones, cargarPresupuestos, contarPorRevisar } from '@/lib/datos';
+import { aPesos, aPesosCortos, fechaDeCorte, MESES_CORTOS } from '@/lib/formato';
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
@@ -13,18 +14,21 @@ export default function Resumen() {
   const { anio, mes } = usePeriodo();
 
   const { datos, error } = useCarga(async () => {
-    const [categorias, movimientos, operaciones, presupuestos, porRevisar] = await Promise.all([
+    const [categorias, movimientos, operaciones, presupuestos, porRevisar, comprasMsi] = await Promise.all([
       cargarCategorias({ todas: true }),
       cargarMovimientosDelAnio(anio),
       cargarOperaciones(),
       cargarPresupuestos(anio, mes),
       contarPorRevisar().catch(() => 0),
+      cargarComprasMsi().catch(() => []),
     ]);
     const cartera = calcularCartera(operaciones);
     return {
       mesActual: resumenMes({ anio, mes, movimientos, categorias, presupuestos, operaciones: cartera.operaciones }),
       anual: resumenAnual(anio, movimientos),
       porRevisar,
+      // Se evalúa al último día del mes elegido, o a hoy si es el mes en curso.
+      msi: estadoMsi(comprasMsi, fechaDeCorte(anio, mes)),
     };
   }, [anio, mes]);
 
@@ -98,6 +102,18 @@ export default function Resumen() {
               );
             })}
           </Seccion>
+
+          {!!datos!.msi.activas && (
+            <Seccion titulo="Meses sin intereses">
+              <Renglon izquierda="Mensualidades de este mes" derecha={aPesos(datos!.msi.esteMes)} onPress={() => router.push('/msi')} />
+              <Renglon
+                izquierda="Por pagar después"
+                detalle={`${datos!.msi.activas} ${datos!.msi.activas === 1 ? 'compra en curso' : 'compras en curso'}`}
+                derecha={aPesos(datos!.msi.deudaRestante)}
+                onPress={() => router.push('/msi')}
+              />
+            </Seccion>
+          )}
 
           {hayAcciones && (
             <Seccion titulo="Acciones este mes">
