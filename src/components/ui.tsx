@@ -175,7 +175,9 @@ export function IconoCategoria({ categoria, tamano = 28 }: { categoria: Pick<Cat
         justifyContent: 'center',
         backgroundColor: a.color + '26', // ~15% de opacidad
       }}
-      accessible={false}
+      // Decorativo: el nombre de la categoría ya se lee junto al ícono.
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
     >
       <Text style={{ fontSize: tamano * (a.esEmoji ? 0.5 : 0.45), fontWeight: '700', color: colores.tinta }}>{a.simbolo}</Text>
     </View>
@@ -267,7 +269,7 @@ export function Boton({
         estilo,
       ]}
     >
-      <Text style={{ color, fontSize: 16, fontWeight: '600' }}>{titulo}</Text>
+      <Text style={{ color, fontSize: 16, fontWeight: '600', textAlign: 'center' }}>{titulo}</Text>
     </Pressable>
   );
 }
@@ -289,7 +291,7 @@ export function Campo({ etiqueta, ayuda, ...props }: TextInputProps & { etiqueta
   return (
     <View style={{ marginBottom: espacio.l }}>
       <Text style={estilos.etiqueta}>{etiqueta}</Text>
-      <TextInput placeholderTextColor={colores.tintaSuave} {...props} style={[estilos.campo, props.style]} />
+      <TextInput placeholderTextColor={colores.tintaSuave} accessibilityLabel={etiqueta} {...props} style={[estilos.campo, props.style]} />
       {!!ayuda && <Text style={[texto.nota, { marginTop: 4 }]}>{ayuda}</Text>}
     </View>
   );
@@ -319,6 +321,7 @@ export function Opciones<T extends string>({
               key={o}
               onPress={() => onCambio(o)}
               accessibilityRole="radio"
+              accessibilityLabel={etiquetaDe(o)}
               accessibilityState={{ selected: activo }}
               style={[estilos.opcion, activo && estilos.opcionActiva]}
             >

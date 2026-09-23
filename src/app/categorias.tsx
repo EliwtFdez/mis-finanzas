@@ -82,7 +82,7 @@ export default function Categorias() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colores.papel }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: 'Categorías' }} />
-      <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <Opciones opciones={TIPOS} valor={tipo} onCambio={(t) => { setTipo(t); setEditando(null); }} etiquetaDe={(t) => (t === 'Gasto' ? 'Gastos' : 'Ingresos')} />
         <Text style={[texto.nota, { marginBottom: espacio.m }]}>
           Toca una categoría para cambiar su nombre, ícono o color, ocultarla o borrarla. Las ocultas no aparecen al registrar, pero conservan sus movimientos.

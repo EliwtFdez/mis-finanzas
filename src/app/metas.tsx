@@ -146,7 +146,7 @@ export default function Metas() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colores.papel }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: 'Metas de ahorro' }} />
-      <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <Text style={texto.nota}>Aparta dinero para algo concreto. Las aportaciones no cuentan como gasto ni mueven tu presupuesto.</Text>
         {(errorCarga || error) && <MensajeError>{errorCarga ?? error}</MensajeError>}
 

@@ -131,7 +131,7 @@ export default function FormularioOperacion() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: id ? 'Editar operación' : 'Nueva operación' }} />
-      <ScrollView contentContainerStyle={{ padding: espacio.l, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: espacio.l, paddingBottom: 48 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <Opciones opciones={TIPOS} valor={tipo} onCambio={setTipo} />
 
         <Campo

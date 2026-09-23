@@ -7,7 +7,7 @@ import { aPesos, leerNumero, MESES } from '@/lib/formato';
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
-import { Boton, MensajeError, Pantalla, Seccion } from '@/components/ui';
+import { Boton, IconoCategoria, MensajeError, Pantalla, Seccion } from '@/components/ui';
 
 export default function PresupuestoPantalla() {
   const router = useRouter();
@@ -39,9 +39,11 @@ export default function PresupuestoPantalla() {
     const inicial: Record<string, string> = { '': r.presupuesto ? String(r.presupuesto) : '' };
     for (const l of r.porCategoria) inicial[l.categoria.id] = l.presupuesto ? String(l.presupuesto) : '';
     setValores(inicial);
-    setMensaje(null);
     setErrorGuardar(null);
   }, [datos]);
+
+  // El aviso de «guardado» sobrevive a la recarga que hace guardar(); se limpia al cambiar de mes.
+  useEffect(() => setMensaje(null), [anio, mes]);
 
   const r = datos?.resumen;
   const sumaCategorias = Object.entries(valores)
@@ -107,6 +109,7 @@ export default function PresupuestoPantalla() {
             )}
             {r.porCategoria.map((l) => (
               <View key={l.categoria.id} style={estilos.fila}>
+                <IconoCategoria categoria={l.categoria} />
                 <View style={{ flex: 1 }}>
                   <Text style={texto.cuerpo}>{l.categoria.nombre}</Text>
                   <Text style={texto.nota}>Gastado {aPesos(l.gastado)}</Text>

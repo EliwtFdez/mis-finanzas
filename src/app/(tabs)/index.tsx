@@ -55,6 +55,8 @@ export default function Resumen() {
 
   const r = datos?.mesActual;
   const lineas = r?.porCategoria.filter((l) => l.gastado > 0 || l.presupuesto !== null) ?? [];
+  // Con una sola categoría la barra diría «100%»: no aporta nada.
+  const reparto = r ? repartoGastos(r.porCategoria) : [];
   const hayAcciones = !!r && (r.comprasAcciones > 0 || r.ventasAcciones > 0 || r.dividendos > 0);
   const maxAnual = Math.max(1, ...(datos?.anual.flatMap((m) => [m.ingresos, m.gastos]) ?? [1]));
 
@@ -107,7 +109,7 @@ export default function Resumen() {
 
           <Seccion titulo="Gastos por categoría">
             {lineas.length === 0 && <Vacio>Aún no hay gastos este mes.</Vacio>}
-            {r.gastos > 0 && <BarraReparto segmentos={repartoGastos(r.porCategoria)} />}
+            {reparto.length >= 2 && <BarraReparto segmentos={reparto} />}
             {lineas.map((l) => {
               const nivel = nivelPresupuesto(l.gastado, l.presupuesto);
               return (

@@ -106,7 +106,7 @@ export default function FormularioDividendo() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: id ? 'Editar dividendo' : 'Nuevo dividendo' }} />
-      <ScrollView contentContainerStyle={{ padding: espacio.l, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: espacio.l, paddingBottom: 48 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <Campo
           etiqueta="Ticker"
           value={ticker}

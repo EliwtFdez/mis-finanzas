@@ -102,7 +102,7 @@ export default function Fijos() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colores.papel }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: 'Gastos e ingresos fijos' }} />
-      <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <Text style={texto.nota}>
           Renta, suscripciones, sueldo… Se registran solos cada mes en su día cuando abres la app. Si borras uno de esos movimientos, no se
           vuelve a crear.

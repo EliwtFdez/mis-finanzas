@@ -88,7 +88,7 @@ export default function MesesSinIntereses() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colores.papel }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: 'Meses sin intereses' }} />
-      <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         <Text style={texto.nota}>
           Registra la compra una vez: la app crea una mensualidad en cada mes, así tu presupuesto cuenta solo lo que te toca pagar.
         </Text>

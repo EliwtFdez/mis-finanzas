@@ -114,7 +114,7 @@ export default function FormularioMovimiento() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ title: id ? 'Editar movimiento' : 'Nuevo movimiento' }} />
-      <ScrollView contentContainerStyle={{ padding: espacio.l, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: espacio.l, paddingBottom: 48 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {pagoMsi && <Text style={[texto.nota, { marginBottom: espacio.l, backgroundColor: colores.verdeClaro, padding: espacio.s }]}>{pagoMsi}</Text>}
         <Opciones opciones={TIPOS} valor={tipo} onCambio={cambiarTipo} />
 
