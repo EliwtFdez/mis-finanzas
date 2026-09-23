@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Categoria, Dividendo, Movimiento, Operacion, Presupuesto } from '@/domain/finanzas';
+import type { Aportacion, Categoria, Dividendo, MetaAhorro, Movimiento, Operacion, Presupuesto } from '@/domain/finanzas';
 import type { CompraMsi } from '@/domain/msi';
 import type { Recurrente } from '@/domain/recurrentes';
 import { todasLasFilas } from '@/domain/paginas';
@@ -17,6 +17,8 @@ export function mensajeError(e: unknown): string {
   if (msg.includes('cantidad_check')) return 'La cantidad debe ser mayor que cero.';
   if (msg.includes('precio_check')) return 'El precio debe ser mayor que cero.';
   if (msg.includes('retencion_menor_al_importe')) return 'La retención debe ser menor que el importe bruto.';
+  if (msg.includes('metas_ahorro_objetivo_check')) return 'La meta debe ser mayor que cero.';
+  if (msg.includes('metas_ahorro_nombre_check')) return 'Escribe un nombre de hasta 60 caracteres.';
   if (msg.includes('categorias_nombre_unico')) return 'Ya tienes una categoría con ese nombre.';
   if (msg.includes('movimientos_categoria_id_fkey')) return 'Esta categoría tiene movimientos. Ocúltala en lugar de borrarla.';
   if (msg.includes('Invalid login credentials')) return 'Correo o contraseña incorrectos.';
@@ -364,6 +366,40 @@ export async function guardarDividendo(d: DividendoNuevo, id?: string) {
 
 export async function borrarDividendo(id: string) {
   const { error } = await supabase.from('dividendos').delete().eq('id', id);
+  if (error) lanzar(error);
+}
+
+// ─── Metas de ahorro ──────────────────────────────────────────
+
+export async function cargarMetas(): Promise<{ metas: MetaAhorro[]; aportaciones: Aportacion[] }> {
+  const [metas, aportaciones] = await Promise.all([
+    supabase.from('metas_ahorro').select('id, nombre, objetivo, fecha_limite, icono, created_at').order('created_at'),
+    supabase.from('aportaciones_meta').select('id, meta_id, fecha, importe, created_at').order('fecha', { ascending: false }).order('created_at', { ascending: false }),
+  ]);
+  const error = metas.error ?? aportaciones.error;
+  if (error) lanzar(error);
+  return {
+    metas: (metas.data ?? []).map((m) => ({ ...(m as MetaAhorro), objetivo: num(m.objetivo) })),
+    aportaciones: (aportaciones.data ?? []).map((a) => ({ ...(a as Aportacion), importe: num(a.importe) })),
+  };
+}
+
+export type MetaNueva = Omit<MetaAhorro, 'id' | 'created_at'>;
+
+export async function guardarMeta(m: MetaNueva, id?: string) {
+  const fila = { ...m, nombre: m.nombre.trim() };
+  const { error } = id ? await supabase.from('metas_ahorro').update(fila).eq('id', id) : await supabase.from('metas_ahorro').insert(fila);
+  if (error) lanzar(error);
+}
+
+export async function borrarMeta(id: string) {
+  const { error } = await supabase.from('metas_ahorro').delete().eq('id', id);
+  if (error) lanzar(error);
+}
+
+/** `importe` negativo = retiro. */
+export async function aportarAMeta(meta_id: string, importe: number, fecha: string) {
+  const { error } = await supabase.from('aportaciones_meta').insert({ meta_id, importe, fecha });
   if (error) lanzar(error);
 }
 

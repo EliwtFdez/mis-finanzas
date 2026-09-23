@@ -66,6 +66,24 @@ export interface Dividendo {
   created_at?: string;
 }
 
+export interface MetaAhorro {
+  id: string;
+  nombre: string;
+  objetivo: number;
+  fecha_limite: string | null; // AAAA-MM-DD
+  icono: string | null;
+  created_at?: string;
+}
+
+/** Positiva = aportación; negativa = retiro. */
+export interface Aportacion {
+  id: string;
+  meta_id: string;
+  fecha: string;
+  importe: number;
+  created_at?: string;
+}
+
 export interface Presupuesto {
   id?: string;
   anio: number;

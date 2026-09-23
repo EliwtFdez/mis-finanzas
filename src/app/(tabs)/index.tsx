@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { calcularCartera, nivelPresupuesto, resumenAnual, resumenMes, type NivelPresupuesto } from '@/domain/finanzas';
+import { estadoMetas } from '@/domain/metas';
 import { estadoMsi } from '@/domain/msi';
 import { proximosDelMes } from '@/domain/recurrentes';
 import {
@@ -8,6 +9,7 @@ import {
   cargarCategorias,
   cargarComprasMsi,
   cargarDividendos,
+  cargarMetas,
   cargarMovimientosDelAnio,
   cargarOperaciones,
   cargarPresupuestos,
@@ -27,7 +29,7 @@ export default function Resumen() {
   const { datos, error } = useCarga(async () => {
     // Primero registra los fijos que ya vencieron para que aparezcan en los totales.
     await aplicarRecurrentes();
-    const [categorias, movimientos, operaciones, presupuestos, porRevisar, comprasMsi, recurrentes, dividendos] = await Promise.all([
+    const [categorias, movimientos, operaciones, presupuestos, porRevisar, comprasMsi, recurrentes, dividendos, metas] = await Promise.all([
       cargarCategorias({ todas: true }),
       cargarMovimientosDelAnio(anio),
       cargarOperaciones(),
@@ -36,6 +38,7 @@ export default function Resumen() {
       cargarComprasMsi().catch(() => []),
       cargarRecurrentes().catch(() => []),
       cargarDividendos().catch(() => []),
+      cargarMetas().catch(() => ({ metas: [], aportaciones: [] })),
     ]);
     const cartera = calcularCartera(operaciones);
     return {
@@ -44,6 +47,7 @@ export default function Resumen() {
       porRevisar,
       // Se evalúa al último día del mes elegido, o a hoy si es el mes en curso.
       msi: estadoMsi(comprasMsi, fechaDeCorte(anio, mes)),
+      metas: estadoMetas(metas.metas, metas.aportaciones, hoy()).filter((e) => !e.completada).slice(0, 3),
       // Solo tiene sentido en el mes en curso.
       proximosFijos: proximosDelMes(recurrentes, hoy()).filter((p) => p.fecha.startsWith(fechaDeCorte(anio, mes).slice(0, 7))),
     };
@@ -147,6 +151,26 @@ export default function Resumen() {
                 derecha={aPesos(datos!.msi.deudaRestante)}
                 onPress={() => router.push('/msi')}
               />
+            </Seccion>
+          )}
+
+          {datos!.metas.length > 0 && (
+            <Seccion titulo="Metas de ahorro">
+              {datos!.metas.map((e) => (
+                <Pressable key={e.meta.id} onPress={() => router.push('/metas')} style={estilos.categoria} accessibilityRole="button">
+                  <View style={estilos.categoriaFila}>
+                    <View style={estilos.categoriaNombre}>
+                      <IconoCategoria categoria={{ nombre: e.meta.nombre, icono: e.meta.icono, color: colores.verde }} tamano={24} />
+                      <Text style={texto.cuerpo} numberOfLines={1}>{e.meta.nombre}</Text>
+                    </View>
+                    <Text style={texto.cifra}>
+                      {aPesos(e.ahorrado)}
+                      <Text style={texto.nota}> / {aPesosCortos(e.meta.objetivo)}</Text>
+                    </Text>
+                  </View>
+                  <Barra valor={e.ahorrado} maximo={e.meta.objetivo} />
+                </Pressable>
+              ))}
             </Seccion>
           )}
 
