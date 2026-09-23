@@ -29,6 +29,9 @@ select pruebas.afirmar(
   (select icono = '🍽️' and color = '#008300' from categorias where nombre = 'Comida'),
   'las categorías iniciales traen ícono y color');
 select pruebas.afirmar(
+  (select count(distinct color) = 2 from categorias where nombre in ('Compras', 'Transporte')),
+  'Compras y Transporte no comparten color');
+select pruebas.afirmar(
   (select icono is null and color is null from categorias where nombre = 'Mascotas y veterinario'),
   'una categoría nueva puede quedar sin ícono ni color');
 update categorias set icono = '🐾', color = '#E87BA4' where nombre = 'Mascotas y veterinario';
