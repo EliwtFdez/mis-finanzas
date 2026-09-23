@@ -239,22 +239,21 @@ export interface ResumenDatosUsuario {
   movimientos: number;
   operaciones: number;
   presupuestos: number;
+  dividendos: number;
+  fijos: number;
+  comprasMsi: number;
+  metas: number;
 }
 
 /** Cantidades visibles para la sesión actual; RLS impide contar datos ajenos. */
 export async function cargarResumenDatosUsuario(): Promise<ResumenDatosUsuario> {
-  const [movimientos, operaciones, presupuestos] = await Promise.all([
-    supabase.from('movimientos').select('id', { count: 'exact', head: true }),
-    supabase.from('operaciones').select('id', { count: 'exact', head: true }),
-    supabase.from('presupuestos').select('id', { count: 'exact', head: true }),
-  ]);
-  const error = movimientos.error ?? operaciones.error ?? presupuestos.error;
+  const contar = (tabla: string) => supabase.from(tabla).select('id', { count: 'exact', head: true });
+  const tablas = ['movimientos', 'operaciones', 'presupuestos', 'dividendos', 'recurrentes', 'compras_msi', 'metas_ahorro'];
+  const r = await Promise.all(tablas.map(contar));
+  const error = r.find((x) => x.error)?.error;
   if (error) lanzar(error);
-  return {
-    movimientos: movimientos.count ?? 0,
-    operaciones: operaciones.count ?? 0,
-    presupuestos: presupuestos.count ?? 0,
-  };
+  const [movimientos, operaciones, presupuestos, dividendos, fijos, comprasMsi, metas] = r.map((x) => x.count ?? 0);
+  return { movimientos, operaciones, presupuestos, dividendos, fijos, comprasMsi, metas };
 }
 
 export interface Perfil {

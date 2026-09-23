@@ -57,7 +57,7 @@ export default function Usuario() {
   const edadNum = edad.trim() === '' ? null : Number(edad);
   const edadValida = edadNum === null || (Number.isInteger(edadNum) && edadNum > 0 && edadNum < 130);
   const perfilCambio = nombre.trim() !== perfil.nombre || edadNum !== perfil.edad || ocupacion.trim() !== perfil.ocupacion;
-  const total = datos ? datos.movimientos + datos.operaciones + datos.presupuestos : 0;
+  const total = datos ? Object.values(datos).reduce((s, n) => s + n, 0) : 0;
 
   async function cerrarSesion() {
     setProcesando(true);
@@ -124,7 +124,7 @@ export default function Usuario() {
       await borrarTodosMisDatos();
       setConfirmando(false);
       setConfirmacion('');
-      setAviso('Todos tus movimientos, presupuestos, operaciones, fijos y compras a meses fueron eliminados.');
+      setAviso('Todos tus movimientos, presupuestos, operaciones, dividendos, fijos, compras a meses y metas fueron eliminados.');
       recargar();
     } catch (e) {
       setError(mensajeError(e));
@@ -168,6 +168,10 @@ export default function Usuario() {
         <Renglon izquierda="Movimientos" derecha={String(datos?.movimientos ?? '…')} />
         <Renglon izquierda="Operaciones de acciones" derecha={String(datos?.operaciones ?? '…')} />
         <Renglon izquierda="Presupuestos" derecha={String(datos?.presupuestos ?? '…')} />
+        <Renglon izquierda="Dividendos" derecha={String(datos?.dividendos ?? '…')} />
+        <Renglon izquierda="Gastos e ingresos fijos" derecha={String(datos?.fijos ?? '…')} />
+        <Renglon izquierda="Compras a meses" derecha={String(datos?.comprasMsi ?? '…')} />
+        <Renglon izquierda="Metas de ahorro" derecha={String(datos?.metas ?? '…')} />
       </Seccion>
 
       <Seccion titulo="Organización">
@@ -243,7 +247,7 @@ export default function Usuario() {
         <View style={estilos.peligro}>
           <Text style={texto.cuerpo}>Borrar todos mis datos financieros</Text>
           <Text style={[texto.nota, { marginTop: espacio.s }]}>
-            Elimina movimientos, presupuestos, operaciones de acciones, gastos fijos y compras a meses. Tu cuenta y categorías se conservan. No se puede deshacer.
+            Elimina movimientos, presupuestos, operaciones de acciones, dividendos, gastos fijos, compras a meses y metas de ahorro. Tu cuenta y categorías se conservan. No se puede deshacer.
           </Text>
 
           {!confirmando ? (
