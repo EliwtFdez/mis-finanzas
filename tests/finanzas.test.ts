@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { calcularCartera, resumenMes, resumenAnual, type Operacion, type Categoria, type Movimiento } from '../src/domain/finanzas.ts';
-import { emparejarApplePay, esDuplicado, extraerGastosDeTexto, NOTA_APPLE_PAY } from '../src/domain/estadoCuenta.ts';
+import { emparejarAutomaticos, esDuplicado, extraerGastosDeTexto, NOTA_APPLE_PAY } from '../src/domain/estadoCuenta.ts';
 import { reconstruirTextoPdf } from '../src/domain/textoPdf.ts';
 
 const op = (o: Partial<Operacion> & Pick<Operacion, 'fecha' | 'tipo' | 'cantidad' | 'precio'>): Operacion => ({
@@ -181,7 +181,7 @@ test('marca importes en la columna ABONOS aunque la descripción parezca un pago
 });
 
 test('empareja cada gasto del PDF con un solo pago de Apple Pay por importe y fecha cercana', () => {
-  const pares = emparejarApplePay(
+  const pares = emparejarAutomaticos(
     [
       { id: 'a', fecha: '2026-09-10', importe: 29 },
       { id: 'b', fecha: '2026-09-10', importe: 29 },
@@ -194,4 +194,15 @@ test('empareja cada gasto del PDF con un solo pago de Apple Pay por importe y fe
     ],
   );
   assert.deepEqual([...pares].map(([g, m]) => [g, m.id]), [['a', 'ap1']]);
+});
+
+test('también empareja fijos mensuales (Netflix) pero no movimientos capturados a mano', () => {
+  const pares = emparejarAutomaticos(
+    [{ id: 'pdf-netflix', fecha: '2026-09-29', importe: 219 }, { id: 'pdf-cafe', fecha: '2026-09-10', importe: 55 }],
+    [
+      { id: 'fijo', fecha: '2026-09-28', importe: 219, notas: null, recurrente_id: 'r1' },
+      { id: 'manual', fecha: '2026-09-10', importe: 55, notas: null, recurrente_id: null },
+    ],
+  );
+  assert.deepEqual([...pares].map(([g, m]) => [g, m.id]), [['pdf-netflix', 'fijo']]);
 });

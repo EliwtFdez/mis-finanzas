@@ -3,7 +3,7 @@ import { Alert, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } f
 import { Stack, useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import type { Categoria, Movimiento } from '@/domain/finanzas';
-import { emparejarApplePay, esDuplicado, extraerGastosDeTexto, type GastoExtraido } from '@/domain/estadoCuenta';
+import { emparejarAutomaticos, esDuplicado, extraerGastosDeTexto, type GastoExtraido } from '@/domain/estadoCuenta';
 import { cargarCategorias, cargarMovimientosDelAnio, guardarMovimientos } from '@/lib/datos';
 import { extraerTextoPdf } from '@/lib/lectorPdf';
 import { aPesos, fechaLegible } from '@/lib/formato';
@@ -11,10 +11,10 @@ import { usePeriodo } from '@/lib/periodo';
 import { colores, espacio, texto } from '@/lib/tema';
 import { Boton, Cargando, MensajeError } from '@/components/ui';
 
-// applePay: pago que parece ser el mismo, ya registrado por el atajo. Se deja sin marcar pero se puede importar.
-type Candidato = GastoExtraido & { duplicado: boolean; applePay: Pick<Movimiento, 'fecha' | 'descripcion'> | null };
+// yaRegistrado: parece el mismo cargo que registró Apple Pay o un fijo. Se deja sin marcar pero se puede importar.
+type Candidato = GastoExtraido & { duplicado: boolean; yaRegistrado: Pick<Movimiento, 'fecha' | 'descripcion' | 'recurrente_id'> | null };
 
-const importablePorDefecto = (g: Candidato) => !g.duplicado && !g.applePay;
+const importablePorDefecto = (g: Candidato) => !g.duplicado && !g.yaRegistrado;
 
 export default function ImportarEstado() {
   const router = useRouter();
@@ -66,8 +66,8 @@ export default function ImportarEstado() {
       const anios = [...new Set(gastos.map((g) => Number(g.fecha.slice(0, 4))))];
       const existentes = (await Promise.all(anios.map(cargarMovimientosDelAnio))).flat();
       const sinDuplicar = gastos.filter((g) => !esDuplicado(g, existentes));
-      const applePay = emparejarApplePay(sinDuplicar, existentes);
-      const revisados = gastos.map((g) => ({ ...g, duplicado: !sinDuplicar.includes(g), applePay: applePay.get(g.id) ?? null }));
+      const automaticos = emparejarAutomaticos(sinDuplicar, existentes);
+      const revisados = gastos.map((g) => ({ ...g, duplicado: !sinDuplicar.includes(g), yaRegistrado: automaticos.get(g.id) ?? null }));
       setCandidatos(revisados);
       setSeleccionados(new Set(revisados.filter(importablePorDefecto).map((g) => g.id)));
       setArchivoNombre(archivo.name);
@@ -164,7 +164,7 @@ export default function ImportarEstado() {
             {ordenados.map((g) => {
               const categoria = categorias?.find((c) => c.id === g.categoria_id);
               return (
-                <View key={g.id} style={[estilos.gasto, (g.duplicado || (g.applePay && !seleccionados.has(g.id))) && { opacity: 0.55 }]}>
+                <View key={g.id} style={[estilos.gasto, (g.duplicado || (g.yaRegistrado && !seleccionados.has(g.id))) && { opacity: 0.55 }]}>
                   <Switch
                     value={seleccionados.has(g.id) && !g.duplicado}
                     onValueChange={() => alternar(g.id)}
@@ -184,9 +184,10 @@ export default function ImportarEstado() {
                       </Pressable>
                     </View>
                     {g.duplicado && <Text style={estilos.duplicado}>Ya existe un movimiento igual; no se importará.</Text>}
-                    {g.applePay && (
+                    {g.yaRegistrado && (
                       <Text style={estilos.duplicado}>
-                        Parece el pago con Apple Pay «{g.applePay.descripcion}» del {fechaLegible(g.applePay.fecha)}, que ya está registrado.
+                        Parece {g.yaRegistrado.recurrente_id ? 'el fijo' : 'el pago con Apple Pay'} «{g.yaRegistrado.descripcion}» del{' '}
+                        {fechaLegible(g.yaRegistrado.fecha)}, que ya está registrado.
                       </Text>
                     )}
                   </View>

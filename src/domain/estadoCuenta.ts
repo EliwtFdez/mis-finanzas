@@ -150,16 +150,19 @@ export function esDuplicado(gasto: Pick<GastoExtraido, 'fecha' | 'importe' | 'de
 
 const diasEntre = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
 
+/** Registrado solo por la app (Apple Pay o un fijo mensual): el banco lo va a traer con otro nombre. */
+export const esAutomatico = (m: { notas: string | null; recurrente_id?: string | null }) => m.notas === NOTA_APPLE_PAY || !!m.recurrente_id;
+
 /**
- * Empareja cada gasto del PDF con, a lo más, un pago ya registrado por Apple Pay.
- * El comercio se escribe distinto en el banco y en Apple Pay, así que se compara
- * importe exacto y fecha a 2 días o menos (el banco puede aplicar el cargo después).
+ * Empareja cada gasto del PDF con, a lo más, un movimiento registrado automáticamente
+ * (pago de Apple Pay o fijo mensual como Netflix). El comercio se escribe distinto en el banco,
+ * así que se compara importe exacto y fecha a 2 días o menos (el banco puede aplicar el cargo después).
  */
-export function emparejarApplePay<E extends { id: string; fecha: string; importe: number; notas: string | null }>(
+export function emparejarAutomaticos<E extends { id: string; fecha: string; importe: number; notas: string | null; recurrente_id?: string | null }>(
   gastos: Array<Pick<GastoExtraido, 'id' | 'fecha' | 'importe'>>,
   existentes: E[],
 ): Map<string, E> {
-  const libres = existentes.filter((m) => m.notas === NOTA_APPLE_PAY);
+  const libres = existentes.filter(esAutomatico);
   const pares = new Map<string, E>();
   for (const g of [...gastos].sort((a, b) => a.fecha.localeCompare(b.fecha))) {
     let mejor: E | undefined;
