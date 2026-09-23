@@ -121,7 +121,7 @@ export default function Usuario() {
       await borrarTodosMisDatos();
       setConfirmando(false);
       setConfirmacion('');
-      setAviso('Todos tus movimientos, presupuestos y operaciones fueron eliminados.');
+      setAviso('Todos tus movimientos, presupuestos, operaciones, fijos y compras a meses fueron eliminados.');
       recargar();
     } catch (e) {
       setError(mensajeError(e));
@@ -232,7 +232,7 @@ export default function Usuario() {
         <View style={estilos.peligro}>
           <Text style={texto.cuerpo}>Borrar todos mis datos financieros</Text>
           <Text style={[texto.nota, { marginTop: espacio.s }]}>
-            Elimina movimientos, presupuestos y operaciones de acciones. Tu cuenta y categorías se conservan. No se puede deshacer.
+            Elimina movimientos, presupuestos, operaciones de acciones, gastos fijos y compras a meses. Tu cuenta y categorías se conservan. No se puede deshacer.
           </Text>
 
           {!confirmando ? (
