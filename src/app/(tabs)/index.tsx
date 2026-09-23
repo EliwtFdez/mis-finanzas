@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { calcularCartera, resumenAnual, resumenMes } from '@/domain/finanzas';
-import { cargarCategorias, cargarMovimientosDelAnio, cargarOperaciones, cargarPresupuestos } from '@/lib/datos';
+import { cargarCategorias, cargarMovimientosDelAnio, cargarOperaciones, cargarPresupuestos, contarPorRevisar } from '@/lib/datos';
 import { aPesos, aPesosCortos, MESES_CORTOS } from '@/lib/formato';
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
@@ -13,16 +13,18 @@ export default function Resumen() {
   const { anio, mes } = usePeriodo();
 
   const { datos, error } = useCarga(async () => {
-    const [categorias, movimientos, operaciones, presupuestos] = await Promise.all([
+    const [categorias, movimientos, operaciones, presupuestos, porRevisar] = await Promise.all([
       cargarCategorias({ todas: true }),
       cargarMovimientosDelAnio(anio),
       cargarOperaciones(),
       cargarPresupuestos(anio, mes),
+      contarPorRevisar().catch(() => 0),
     ]);
     const cartera = calcularCartera(operaciones);
     return {
       mesActual: resumenMes({ anio, mes, movimientos, categorias, presupuestos, operaciones: cartera.operaciones }),
       anual: resumenAnual(anio, movimientos),
+      porRevisar,
     };
   }, [anio, mes]);
 
@@ -34,6 +36,15 @@ export default function Resumen() {
   return (
     <Pantalla titulo="Resumen" pie={<BotonFlotante titulo="+ Registrar" onPress={() => router.push('/movimiento')} />}>
       {error && <MensajeError>{error}</MensajeError>}
+
+      {!!datos?.porRevisar && (
+        <Pressable onPress={() => router.push('/revisar')} style={estilos.aviso} accessibilityRole="button">
+          <Text style={estilos.avisoTexto}>
+            {datos.porRevisar === 1 ? '1 gasto de Apple Pay por revisar' : `${datos.porRevisar} gastos de Apple Pay por revisar`}
+          </Text>
+          <Text style={estilos.avisoTexto}>›</Text>
+        </Pressable>
+      )}
 
       {r && (
         <>
@@ -128,6 +139,15 @@ export default function Resumen() {
 }
 
 const estilos = StyleSheet.create({
+  aviso: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: espacio.m,
+    padding: espacio.m,
+    backgroundColor: colores.ambarClaro,
+    borderRadius: 8,
+  },
+  avisoTexto: { color: colores.tinta, fontWeight: '600', fontSize: 14 },
   cabeza: { paddingVertical: espacio.l },
   tresCifras: {
     flexDirection: 'row',

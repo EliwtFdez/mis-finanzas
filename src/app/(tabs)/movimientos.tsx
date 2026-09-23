@@ -98,6 +98,7 @@ export default function Movimientos() {
                   detalle={detalle}
                   derecha={(m.tipo === 'Gasto' ? '−' : '+') + aPesos(m.importe)}
                   derechaColor={m.tipo === 'Gasto' ? colores.tinta : colores.verde}
+                  aviso={m.por_revisar ? 'Por revisar: elige su categoría' : undefined}
                   onPress={() => router.push({ pathname: '/movimiento', params: { id: m.id } })}
                 />
               );

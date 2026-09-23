@@ -91,7 +91,7 @@ export type MovimientoNuevo = Omit<Movimiento, 'id' | 'created_at'>;
 
 export async function guardarMovimiento(m: MovimientoNuevo, id?: string) {
   const { error } = id
-    ? await supabase.from('movimientos').update(m).eq('id', id)
+    ? await supabase.from('movimientos').update({ ...m, por_revisar: false }).eq('id', id)
     : await supabase.from('movimientos').insert(m);
   if (error) lanzar(error);
 }
@@ -105,6 +105,32 @@ export async function guardarMovimientos(movimientos: MovimientoNuevo[]) {
 
 export async function borrarMovimiento(id: string) {
   const { error } = await supabase.from('movimientos').delete().eq('id', id);
+  if (error) lanzar(error);
+}
+
+// ─── Gastos por revisar (Apple Pay) ───────────────────────────
+
+export async function cargarPorRevisar(): Promise<Movimiento[]> {
+  const { data, error } = await supabase
+    .from('movimientos')
+    .select('*')
+    .eq('por_revisar', true)
+    .order('fecha', { ascending: false });
+  if (error) lanzar(error);
+  return (data ?? []).map(aMovimiento);
+}
+
+export async function contarPorRevisar(): Promise<number> {
+  const { count, error } = await supabase.from('movimientos').select('id', { count: 'exact', head: true }).eq('por_revisar', true);
+  if (error) lanzar(error);
+  return count ?? 0;
+}
+
+/** Asigna la categoría (o la deja igual si es null) y quita la marca de pendiente. */
+export async function marcarRevisados(ids: string[], categoria_id: string | null) {
+  if (!ids.length) return;
+  const cambios = categoria_id ? { categoria_id, por_revisar: false } : { por_revisar: false };
+  const { error } = await supabase.from('movimientos').update(cambios).in('id', ids);
   if (error) lanzar(error);
 }
 

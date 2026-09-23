@@ -31,7 +31,8 @@ select pruebas.afirmar((select count(*) from tokens_atajo) = 0, 'anon no puede l
 
 -- Aprende la categoría del último gasto en el mismo comercio
 reset role;
-update movimientos set categoria_id = (
+-- (como hace la app al elegir categoría: también quita la marca por_revisar)
+update movimientos set por_revisar = false, categoria_id = (
   select id from categorias where nombre = 'Comida' and user_id = 'b0000000-0000-0000-0000-000000000001'
 ) where descripcion = 'OXXO MADERO';
 select pruebas.como(null);
@@ -53,4 +54,22 @@ select pruebas.como('b0000000-0000-0000-0000-000000000001');
 select generar_token_atajo() as token_nuevo \gset
 select pruebas.como(null);
 select pruebas.espera_error(format('select registrar_gasto_atajo(%L, %L)', :'token', '10'), 'Código de Atajos inválido');
+reset role;
+
+-- Gastos por revisar: solo los que cayeron en la categoría por defecto
+select pruebas.como(null);
+select pruebas.afirmar(
+  (registrar_gasto_atajo(:'token_nuevo', '15', 'Tiendita Nueva') ->> 'por_revisar')::boolean,
+  'comercio desconocido queda por revisar');
+select pruebas.afirmar(
+  not (registrar_gasto_atajo(:'token_nuevo', '31', 'OXXO MADERO') ->> 'por_revisar')::boolean,
+  'comercio con categoría aprendida no queda por revisar');
+reset role;
+select pruebas.afirmar(
+  (select por_revisar from movimientos where descripcion = 'Tiendita Nueva'),
+  'se guarda la marca por_revisar');
+select pruebas.como(null);
+select pruebas.afirmar(
+  (registrar_gasto_atajo(:'token_nuevo', '20', 'tiendita nueva') ->> 'por_revisar')::boolean,
+  'un gasto pendiente no enseña su categoría: el segundo pago también queda por revisar');
 reset role;

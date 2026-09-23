@@ -23,6 +23,8 @@ export interface Movimiento {
   medio_pago: string | null;
   cuenta: string | null;
   notas: string | null;
+  /** Llegó de Apple Pay sin categoría conocida y espera que el usuario la elija. */
+  por_revisar?: boolean;
   created_at?: string;
 }
 
