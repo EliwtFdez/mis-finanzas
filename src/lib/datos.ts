@@ -113,6 +113,31 @@ export async function cargarResumenDatosUsuario(): Promise<ResumenDatosUsuario> 
   };
 }
 
+export interface Perfil {
+  nombre: string;
+  edad: number | null;
+  ocupacion: string;
+}
+
+/** Lee el perfil de los metadatos del usuario (nombre puede venir de un registro previo como `name`). */
+export function perfilDe(metadatos: Record<string, unknown> | undefined): Perfil {
+  const m = metadatos ?? {};
+  const edad = Number(m.edad);
+  return {
+    nombre: String(m.full_name ?? m.name ?? ''),
+    edad: m.edad !== null && m.edad !== undefined && Number.isInteger(edad) ? edad : null,
+    ocupacion: String(m.ocupacion ?? ''),
+  };
+}
+
+/** Guarda el perfil en los metadatos de la cuenta; la sesión se actualiza sola. */
+export async function guardarPerfil(p: Perfil) {
+  const { error } = await supabase.auth.updateUser({
+    data: { full_name: p.nombre.trim() || null, edad: p.edad, ocupacion: p.ocupacion.trim() || null },
+  });
+  if (error) lanzar(error);
+}
+
 /** Borra todos los datos financieros de la sesión en una sola transacción. */
 export async function borrarTodosMisDatos() {
   const { error } = await supabase.rpc('borrar_todos_mis_datos');

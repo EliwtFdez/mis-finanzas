@@ -5,9 +5,8 @@ import { cargarCategorias, cargarMovimientosDelAnio, cargarOperaciones, cargarPr
 import { aPesos, aPesosCortos, MESES_CORTOS } from '@/lib/formato';
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
-import { supabase } from '@/lib/supabase';
 import { colores, espacio, texto } from '@/lib/tema';
-import { Barra, Boton, BotonFlotante, Cifra, MensajeError, Pantalla, Renglon, Seccion, Vacio } from '@/components/ui';
+import { Barra, BotonFlotante, Cifra, MensajeError, Pantalla, Renglon, Seccion, Vacio } from '@/components/ui';
 
 export default function Resumen() {
   const router = useRouter();
@@ -122,8 +121,6 @@ export default function Resumen() {
               </View>
             ))}
           </Seccion>
-
-          <Boton titulo="Cerrar sesión" variante="secundario" onPress={() => supabase.auth.signOut()} estilo={{ marginTop: espacio.xxl }} />
         </>
       )}
     </Pantalla>

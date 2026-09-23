@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useSesion } from '@/lib/sesion';
 import { supabase } from '@/lib/supabase';
-import { borrarTodosMisDatos, cargarResumenDatosUsuario, mensajeError } from '@/lib/datos';
+import { borrarTodosMisDatos, cargarResumenDatosUsuario, guardarPerfil, mensajeError, perfilDe } from '@/lib/datos';
 import { useCarga } from '@/lib/useCarga';
 import { Boton, Campo, MensajeError, Pantalla, Renglon, Seccion } from '@/components/ui';
 import { colores, espacio, texto } from '@/lib/tema';
@@ -22,7 +22,24 @@ export default function Usuario() {
   const [aviso, setAviso] = useState<string | null>(null);
 
   const usuario = sesion?.user;
-  const nombre = usuario?.user_metadata?.full_name ?? usuario?.user_metadata?.name;
+  const perfil = perfilDe(usuario?.user_metadata);
+  const [nombre, setNombre] = useState(perfil.nombre);
+  const [edad, setEdad] = useState(perfil.edad?.toString() ?? '');
+  const [ocupacion, setOcupacion] = useState(perfil.ocupacion);
+  const [guardandoPerfil, setGuardandoPerfil] = useState(false);
+  const [errorPerfil, setErrorPerfil] = useState<string | null>(null);
+  const [avisoPerfil, setAvisoPerfil] = useState<string | null>(null);
+
+  // Si el perfil cambia desde otro dispositivo, refleja lo guardado.
+  useEffect(() => {
+    setNombre(perfil.nombre);
+    setEdad(perfil.edad?.toString() ?? '');
+    setOcupacion(perfil.ocupacion);
+  }, [perfil.nombre, perfil.edad, perfil.ocupacion]);
+
+  const edadNum = edad.trim() === '' ? null : Number(edad);
+  const edadValida = edadNum === null || (Number.isInteger(edadNum) && edadNum > 0 && edadNum < 130);
+  const perfilCambio = nombre.trim() !== perfil.nombre || edadNum !== perfil.edad || ocupacion.trim() !== perfil.ocupacion;
   const total = datos ? datos.movimientos + datos.operaciones + datos.presupuestos : 0;
 
   async function cerrarSesion() {
@@ -32,6 +49,20 @@ export default function Usuario() {
     if (error) {
       setError(mensajeError(error));
       setProcesando(false);
+    }
+  }
+
+  async function enviarPerfil() {
+    setGuardandoPerfil(true);
+    setErrorPerfil(null);
+    setAvisoPerfil(null);
+    try {
+      await guardarPerfil({ nombre, edad: edadNum, ocupacion });
+      setAvisoPerfil('Perfil guardado.');
+    } catch (e) {
+      setErrorPerfil(mensajeError(e));
+    } finally {
+      setGuardandoPerfil(false);
     }
   }
 
@@ -65,8 +96,30 @@ export default function Usuario() {
 
   return (
     <Pantalla titulo="Usuario" conMes={false}>
+      <Seccion titulo="Perfil">
+        <View style={{ paddingTop: espacio.m }}>
+          <Campo etiqueta="Nombre" value={nombre} onChangeText={setNombre} autoComplete="name" placeholder="Tu nombre" />
+          <Campo
+            etiqueta="Edad"
+            value={edad}
+            onChangeText={(v) => setEdad(v.replace(/\D/g, ''))}
+            keyboardType="number-pad"
+            maxLength={3}
+            placeholder="Años"
+            ayuda={edadValida ? undefined : 'Escribe una edad válida.'}
+          />
+          <Campo etiqueta="Ocupación" value={ocupacion} onChangeText={setOcupacion} placeholder="Ej. Ingeniero, estudiante…" />
+          <Boton
+            titulo={guardandoPerfil ? 'Guardando…' : 'Guardar perfil'}
+            onPress={enviarPerfil}
+            deshabilitado={guardandoPerfil || !perfilCambio || !edadValida}
+          />
+          {errorPerfil && <MensajeError>{errorPerfil}</MensajeError>}
+          {!!avisoPerfil && !perfilCambio && <Text style={estilos.aviso}>{avisoPerfil}</Text>}
+        </View>
+      </Seccion>
+
       <Seccion titulo="Datos de la cuenta">
-        {!!nombre && <Renglon izquierda="Nombre" derecha={String(nombre)} />}
         <Renglon izquierda="Correo" derecha={usuario?.email ?? 'No disponible'} />
         <Renglon izquierda="Cuenta creada" derecha={fechaCuenta(usuario?.created_at)} />
         <Renglon izquierda="Identificador" detalle={usuario?.id ?? 'No disponible'} />
