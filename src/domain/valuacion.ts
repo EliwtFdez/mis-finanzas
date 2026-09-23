@@ -11,11 +11,14 @@ export interface Cotizacion {
 
 /**
  * Símbolos de Yahoo a probar en orden. Lo que compras en pesos (BMV o SIC) cotiza como "TICKER.MX";
- * lo comprado en dólares, en su bolsa de origen. Se quita el "*" de series como "WALMEX*".
+ * lo comprado en dólares, en su bolsa de origen. Se quita el "*" de series como "WALMEX*" y el sufijo
+ * de mercado que usa la app ("WALMEX-MX", "VOO-US"): Yahoo no lo conoce.
  */
 export function simbolosYahoo(ticker: string, moneda: Moneda): string[] {
-  const limpio = ticker.trim().toUpperCase().replace(/\*+$/, '');
-  return moneda === 'MXN' ? [`${limpio}.MX`, limpio] : [limpio, `${limpio}.MX`];
+  const sufijo = ticker.trim().toUpperCase().match(/^(.+?)(?:-(MX|US))?$/)!;
+  const base = sufijo[1].replace(/\*+$/, '');
+  if (sufijo[2] === 'MX') return [`${base}.MX`];
+  return moneda === 'MXN' ? [`${base}.MX`, base] : [base, `${base}.MX`];
 }
 
 /** Lee la respuesta de /v8/finance/chart; null si no hay precio. */

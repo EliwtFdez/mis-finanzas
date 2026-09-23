@@ -8,6 +8,14 @@ test('símbolos de Yahoo según la moneda de compra', () => {
   assert.deepEqual(simbolosYahoo('AAPL', 'USD'), ['AAPL', 'AAPL.MX']);
 });
 
+test('quita el sufijo de mercado de la app, que Yahoo no conoce', () => {
+  assert.deepEqual(simbolosYahoo('WALMEX-MX', 'MXN'), ['WALMEX.MX']);
+  assert.deepEqual(simbolosYahoo('walmex*-mx', 'MXN'), ['WALMEX.MX']);
+  assert.deepEqual(simbolosYahoo('VOO-US', 'USD'), ['VOO', 'VOO.MX']);
+  assert.deepEqual(simbolosYahoo('VOO-US', 'MXN'), ['VOO.MX', 'VOO']); // comprado en el SIC
+  assert.deepEqual(simbolosYahoo('BRK-B', 'USD'), ['BRK-B', 'BRK-B.MX'], 'un guion que no es de mercado se queda');
+});
+
 test('lee la respuesta real de /v8/finance/chart', () => {
   const ok = { chart: { result: [{ meta: { symbol: 'WALMEX.MX', currency: 'MXN', regularMarketPrice: 45.9, regularMarketTime: 1790190613 } }], error: null } };
   assert.deepEqual(leerCotizacionYahoo(ok), { simbolo: 'WALMEX.MX', precio: 45.9, moneda: 'MXN', hora: 1790190613 });
