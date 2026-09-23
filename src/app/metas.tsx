@@ -3,12 +3,19 @@ import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleShee
 import { Stack } from 'expo-router';
 import { estadoMetas, ICONOS_METAS, type EstadoMeta } from '@/domain/metas';
 import { aportarAMeta, borrarMeta, cargarMetas, guardarMeta, mensajeError } from '@/lib/datos';
-import { aPesos, fechaLegible, hoy, leerNumero } from '@/lib/formato';
+import { aPesos, fechaATexto, fechaLegible, hoy, leerNumero } from '@/lib/formato';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
 import { Barra, Boton, Campo, CampoFecha, IconoCategoria, MensajeError, Opciones, Seccion, Vacio } from '@/components/ui';
 
 const PLAZO = ['Sin fecha', 'Con fecha'] as const;
+
+/** Fecha límite sugerida: dentro de un año. Hoy no sirve: la meta pediría juntarlo todo este mes. */
+function enUnAnio() {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return fechaATexto(d);
+}
 
 export default function Metas() {
   const { datos, error: errorCarga, recargar } = useCarga(async () => {
@@ -21,13 +28,15 @@ export default function Metas() {
   const [nombre, setNombre] = useState('');
   const [objetivo, setObjetivo] = useState('');
   const [plazo, setPlazo] = useState<(typeof PLAZO)[number]>('Sin fecha');
-  const [fechaLimite, setFechaLimite] = useState(hoy());
+  const [fechaLimite, setFechaLimite] = useState(enUnAnio);
   const [icono, setIcono] = useState<string | null>(ICONOS_METAS[0]);
 
   const [abierta, setAbierta] = useState<string | null>(null);
   const [monto, setMonto] = useState('');
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Error de aportar/retirar: se muestra junto a los botones, no hasta arriba.
+  const [errorMonto, setErrorMonto] = useState<string | null>(null);
 
   async function ejecutar(accion: () => Promise<unknown>) {
     setOcupado(true);
@@ -49,7 +58,7 @@ export default function Metas() {
     setNombre(e?.meta.nombre ?? '');
     setObjetivo(e ? String(e.meta.objetivo) : '');
     setPlazo(e?.meta.fecha_limite ? 'Con fecha' : 'Sin fecha');
-    setFechaLimite(e?.meta.fecha_limite ?? hoy());
+    setFechaLimite(e?.meta.fecha_limite ?? enUnAnio());
     setIcono(e ? e.meta.icono : ICONOS_METAS[0]);
     setError(null);
   }
@@ -65,8 +74,19 @@ export default function Metas() {
 
   async function mover(e: EstadoMeta, signo: 1 | -1) {
     const importe = leerNumero(monto);
-    if (!importe || importe <= 0) return setError('Escribe un monto mayor que cero.');
-    if (await ejecutar(() => aportarAMeta(e.meta.id, signo * importe, hoy()))) setMonto('');
+    setErrorMonto(null);
+    if (!importe || importe <= 0) return setErrorMonto('Escribe un monto mayor que cero.');
+    if (signo < 0 && importe > e.ahorrado) return setErrorMonto(`Solo tienes ${aPesos(e.ahorrado)} ahorrados en esta meta.`);
+    setOcupado(true);
+    try {
+      await aportarAMeta(e.meta.id, signo * importe, hoy());
+      setMonto('');
+      recargar();
+    } catch (err) {
+      setErrorMonto(mensajeError(err));
+    } finally {
+      setOcupado(false);
+    }
   }
 
   function borrar(e: EstadoMeta) {
@@ -89,7 +109,7 @@ export default function Metas() {
           onPress={() => {
             setAbierta(estaAbierta ? null : e.meta.id);
             setMonto('');
-            setError(null);
+            setErrorMonto(null);
           }}
           accessibilityRole="button"
           accessibilityState={{ expanded: estaAbierta }}
@@ -124,6 +144,7 @@ export default function Metas() {
               <Boton titulo="Aportar" onPress={() => mover(e, 1)} deshabilitado={ocupado} estilo={{ flex: 1 }} />
               <Boton titulo="Retirar" variante="secundario" onPress={() => mover(e, -1)} deshabilitado={ocupado || e.ahorrado <= 0} estilo={{ flex: 1 }} />
             </View>
+            {errorMonto && <MensajeError>{errorMonto}</MensajeError>}
             {historial.map((a) => (
               <View key={a.id} style={estilos.movimiento}>
                 <Text style={texto.nota}>{fechaLegible(a.fecha, true)}</Text>
