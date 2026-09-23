@@ -1,5 +1,5 @@
 // Exportación a CSV que Excel abre bien en español (UTF-8 con BOM, coma como separador).
-import type { Movimiento, Operacion } from './finanzas';
+import type { Dividendo, Movimiento, Operacion } from './finanzas';
 
 type Celda = string | number | null | undefined;
 
@@ -30,5 +30,14 @@ export function operacionesACsv(operaciones: Operacion[]): string {
     [...operaciones]
       .sort((a, b) => a.fecha.localeCompare(b.fecha))
       .map((o) => [o.fecha, o.ticker, o.tipo, o.cantidad, o.precio, o.comision, o.moneda, o.tipo_cambio, o.notas]),
+  );
+}
+
+export function dividendosACsv(dividendos: Dividendo[]): string {
+  return aCsv(
+    ['Fecha', 'Ticker', 'Importe bruto', 'Retención', 'Moneda', 'Tipo de cambio', 'Notas'],
+    [...dividendos]
+      .sort((a, b) => a.fecha.localeCompare(b.fecha))
+      .map((d) => [d.fecha, d.ticker, d.importe, d.retencion, d.moneda, d.tipo_cambio, d.notas]),
   );
 }

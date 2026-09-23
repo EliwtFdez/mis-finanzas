@@ -54,7 +54,8 @@ Escanea el código QR con **Expo Go** en tu teléfono. Todas las librerías que 
 | **Categorías** editables: agregar, renombrar, ordenar, ocultar, con ícono y color | Usuario → Organización, o Presupuesto |
 | **Búsqueda** por comercio, categoría, cuenta o monto en todo el año | Movimientos |
 | **Valor de mercado** y ganancia no realizada con precios de Yahoo Finance | Acciones |
-| **Exportar a CSV** (Excel/Numbers) | Usuario → Respaldo |
+| **Dividendos** netos de retención, en MXN o USD, por ticker y en el resumen del mes | Acciones → Dividendos |
+| **Exportar a CSV** (Excel/Numbers): movimientos, operaciones y dividendos | Usuario → Respaldo |
 | **Bloqueo con Face ID o huella** | Usuario → Seguridad |
 
 Las reglas de cálculo son las mismas de la hoja Guía:
@@ -102,7 +103,7 @@ Las funciones de `src/domain/` solo pueden importar *tipos* de otros módulos: `
 
 Tiene los mismos límites que el Excel:
 
-- No maneja dividendos, splits ni ventas en corto.
+- No maneja splits ni ventas en corto.
 - No calcula impuestos.
 
 Los precios de mercado vienen de Yahoo Finance: son gratuitos, pueden tener retraso y solo se consultan en la app del teléfono (el navegador los bloquea). Si un ticker no aparece, la app lo indica y lo deja fuera del valor de mercado.

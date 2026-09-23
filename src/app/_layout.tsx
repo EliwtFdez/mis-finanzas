@@ -42,6 +42,7 @@ function Navegacion() {
         <Stack.Screen name="movimiento" options={{ presentation: 'modal', headerShown: true }} />
         <Stack.Screen name="importar-estado" options={{ presentation: 'modal', headerShown: true, title: 'Importar estado de cuenta' }} />
         <Stack.Screen name="operacion" options={{ presentation: 'modal', headerShown: true }} />
+        <Stack.Screen name="dividendo" options={{ presentation: 'modal', headerShown: true }} />
         <Stack.Screen name="fijos" options={{ presentation: 'modal', headerShown: true, title: 'Gastos e ingresos fijos' }} />
         <Stack.Screen name="msi" options={{ presentation: 'modal', headerShown: true, title: 'Meses sin intereses' }} />
         <Stack.Screen name="revisar" options={{ presentation: 'modal', headerShown: true, title: 'Gastos por revisar' }} />

@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import {
   borrarTodosMisDatos,
   cargarCategorias,
+  cargarDividendos,
   cargarOperaciones,
   cargarResumenDatosUsuario,
   cargarTodosLosMovimientos,
@@ -14,7 +15,7 @@ import {
   mensajeError,
   perfilDe,
 } from '@/lib/datos';
-import { movimientosACsv, operacionesACsv } from '@/domain/csv';
+import { dividendosACsv, movimientosACsv, operacionesACsv } from '@/domain/csv';
 import { compartirCsv } from '@/lib/exportar';
 import { hoy } from '@/lib/formato';
 import { useCarga } from '@/lib/useCarga';
@@ -68,9 +69,9 @@ export default function Usuario() {
     }
   }
 
-  const [exportando, setExportando] = useState<'movimientos' | 'acciones' | null>(null);
+  const [exportando, setExportando] = useState<'movimientos' | 'acciones' | 'dividendos' | null>(null);
 
-  async function exportar(que: 'movimientos' | 'acciones') {
+  async function exportar(que: 'movimientos' | 'acciones' | 'dividendos') {
     setExportando(que);
     setError(null);
     try {
@@ -78,8 +79,10 @@ export default function Usuario() {
         const [categorias, movimientos] = await Promise.all([cargarCategorias({ todas: true }), cargarTodosLosMovimientos()]);
         const nombres = new Map(categorias.map((c) => [c.id, c.nombre]));
         await compartirCsv(`movimientos-${hoy()}.csv`, movimientosACsv(movimientos, (id) => nombres.get(id) ?? ''));
-      } else {
+      } else if (que === 'acciones') {
         await compartirCsv(`acciones-${hoy()}.csv`, operacionesACsv(await cargarOperaciones()));
+      } else {
+        await compartirCsv(`dividendos-${hoy()}.csv`, dividendosACsv(await cargarDividendos()));
       }
     } catch (e) {
       setError(mensajeError(e));
@@ -197,6 +200,13 @@ export default function Usuario() {
           variante="secundario"
           onPress={() => exportar('acciones')}
           deshabilitado={!!exportando || !datos?.operaciones}
+          estilo={{ marginTop: espacio.s }}
+        />
+        <Boton
+          titulo={exportando === 'dividendos' ? 'Preparando…' : 'Exportar dividendos'}
+          variante="secundario"
+          onPress={() => exportar('dividendos')}
+          deshabilitado={!!exportando}
           estilo={{ marginTop: espacio.s }}
         />
       </Seccion>

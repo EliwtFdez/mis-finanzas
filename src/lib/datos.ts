@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Categoria, Movimiento, Operacion, Presupuesto } from '@/domain/finanzas';
+import type { Categoria, Dividendo, Movimiento, Operacion, Presupuesto } from '@/domain/finanzas';
 import type { CompraMsi } from '@/domain/msi';
 import type { Recurrente } from '@/domain/recurrentes';
 import { todasLasFilas } from '@/domain/paginas';
@@ -16,6 +16,7 @@ export function mensajeError(e: unknown): string {
   if (msg.includes('ticker_check')) return 'Escribe el ticker en mayúsculas y sin espacios.';
   if (msg.includes('cantidad_check')) return 'La cantidad debe ser mayor que cero.';
   if (msg.includes('precio_check')) return 'El precio debe ser mayor que cero.';
+  if (msg.includes('retencion_menor_al_importe')) return 'La retención debe ser menor que el importe bruto.';
   if (msg.includes('categorias_nombre_unico')) return 'Ya tienes una categoría con ese nombre.';
   if (msg.includes('movimientos_categoria_id_fkey')) return 'Esta categoría tiene movimientos. Ocúltala en lugar de borrarla.';
   if (msg.includes('Invalid login credentials')) return 'Correo o contraseña incorrectos.';
@@ -335,6 +336,34 @@ export async function guardarOperacion(o: OperacionNueva, id?: string) {
 
 export async function borrarOperacion(id: string) {
   const { error } = await supabase.from('operaciones').delete().eq('id', id);
+  if (error) lanzar(error);
+}
+
+// ─── Dividendos ───────────────────────────────────────────────
+
+const aDividendo = (r: Record<string, unknown>): Dividendo => ({
+  ...(r as unknown as Dividendo),
+  importe: num(r.importe),
+  retencion: num(r.retencion),
+  tipo_cambio: numONull(r.tipo_cambio),
+});
+
+export async function cargarDividendos(): Promise<Dividendo[]> {
+  const filas = await todas((desde, hasta) =>
+    supabase.from('dividendos').select('*').order('fecha', { ascending: false }).order('created_at', { ascending: false }).order('id').range(desde, hasta),
+  );
+  return filas.map(aDividendo);
+}
+
+export type DividendoNuevo = Omit<Dividendo, 'id' | 'created_at'>;
+
+export async function guardarDividendo(d: DividendoNuevo, id?: string) {
+  const { error } = id ? await supabase.from('dividendos').update(d).eq('id', id) : await supabase.from('dividendos').insert(d);
+  if (error) lanzar(error);
+}
+
+export async function borrarDividendo(id: string) {
+  const { error } = await supabase.from('dividendos').delete().eq('id', id);
   if (error) lanzar(error);
 }
 

@@ -51,6 +51,21 @@ export interface Operacion {
   created_at?: string;
 }
 
+/** Dividendo cobrado. No cambia títulos ni costo promedio. */
+export interface Dividendo {
+  id: string;
+  fecha: string; // AAAA-MM-DD
+  ticker: string;
+  /** Bruto, en la moneda del pago. */
+  importe: number;
+  /** Impuesto retenido, en la moneda del pago. */
+  retencion: number;
+  moneda: Moneda;
+  tipo_cambio: number | null;
+  notas: string | null;
+  created_at?: string;
+}
+
 export interface Presupuesto {
   id?: string;
   anio: number;
@@ -163,6 +178,23 @@ export function calcularCartera(operaciones: Operacion[]): {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Dividendos
+// ─────────────────────────────────────────────────────────────
+
+/** Lo que llegó a tu cuenta: bruto menos retención, convertido a pesos. */
+export function netoDividendoMXN(d: Pick<Dividendo, 'importe' | 'retencion' | 'moneda' | 'tipo_cambio'>): number {
+  const tc = d.moneda === 'MXN' ? 1 : d.tipo_cambio ?? 0;
+  return redondear((d.importe - d.retencion) * tc);
+}
+
+/** Totales netos en MXN: de todo el historial y por ticker. */
+export function resumenDividendos(dividendos: Dividendo[]): { total: number; porTicker: Map<string, number> } {
+  const porTicker = new Map<string, number>();
+  for (const d of dividendos) porTicker.set(d.ticker, redondear((porTicker.get(d.ticker) ?? 0) + netoDividendoMXN(d)));
+  return { total: redondear([...porTicker.values()].reduce((s, n) => s + n, 0)), porTicker };
+}
+
+// ─────────────────────────────────────────────────────────────
 // Resumen del mes (hoja Resumen)
 // ─────────────────────────────────────────────────────────────
 
@@ -184,6 +216,8 @@ export interface ResumenMes {
   comprasAcciones: number;
   ventasAcciones: number;
   gananciaVentas: number;
+  /** Netos de retención, en MXN. */
+  dividendos: number;
   porCategoria: LineaCategoria[];
 }
 
@@ -194,6 +228,7 @@ export function resumenMes(params: {
   categorias: Categoria[];
   presupuestos: Presupuesto[];
   operaciones: OperacionCalculada[];
+  dividendos?: Dividendo[];
 }): ResumenMes {
   const { anio, mes, categorias } = params;
   const movs = params.movimientos.filter((m) => enMes(m.fecha, anio, mes));
@@ -222,6 +257,9 @@ export function resumenMes(params: {
     comprasAcciones: redondear(-ops.filter((o) => o.tipo === 'Compra').reduce((s, o) => s + o.flujo, 0)),
     ventasAcciones: redondear(ops.filter((o) => o.tipo === 'Venta').reduce((s, o) => s + o.flujo, 0)),
     gananciaVentas: redondear(ops.reduce((s, o) => s + o.ganancia, 0)),
+    dividendos: redondear(
+      (params.dividendos ?? []).filter((d) => enMes(d.fecha, anio, mes)).reduce((s, d) => s + netoDividendoMXN(d), 0),
+    ),
     porCategoria,
   };
 }

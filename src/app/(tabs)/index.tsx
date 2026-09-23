@@ -7,6 +7,7 @@ import {
   aplicarRecurrentes,
   cargarCategorias,
   cargarComprasMsi,
+  cargarDividendos,
   cargarMovimientosDelAnio,
   cargarOperaciones,
   cargarPresupuestos,
@@ -26,7 +27,7 @@ export default function Resumen() {
   const { datos, error } = useCarga(async () => {
     // Primero registra los fijos que ya vencieron para que aparezcan en los totales.
     await aplicarRecurrentes();
-    const [categorias, movimientos, operaciones, presupuestos, porRevisar, comprasMsi, recurrentes] = await Promise.all([
+    const [categorias, movimientos, operaciones, presupuestos, porRevisar, comprasMsi, recurrentes, dividendos] = await Promise.all([
       cargarCategorias({ todas: true }),
       cargarMovimientosDelAnio(anio),
       cargarOperaciones(),
@@ -34,10 +35,11 @@ export default function Resumen() {
       contarPorRevisar().catch(() => 0),
       cargarComprasMsi().catch(() => []),
       cargarRecurrentes().catch(() => []),
+      cargarDividendos().catch(() => []),
     ]);
     const cartera = calcularCartera(operaciones);
     return {
-      mesActual: resumenMes({ anio, mes, movimientos, categorias, presupuestos, operaciones: cartera.operaciones }),
+      mesActual: resumenMes({ anio, mes, movimientos, categorias, presupuestos, operaciones: cartera.operaciones, dividendos }),
       anual: resumenAnual(anio, movimientos),
       porRevisar,
       // Se evalúa al último día del mes elegido, o a hoy si es el mes en curso.
@@ -49,7 +51,7 @@ export default function Resumen() {
 
   const r = datos?.mesActual;
   const lineas = r?.porCategoria.filter((l) => l.gastado > 0 || l.presupuesto !== null) ?? [];
-  const hayAcciones = !!r && (r.comprasAcciones > 0 || r.ventasAcciones > 0);
+  const hayAcciones = !!r && (r.comprasAcciones > 0 || r.ventasAcciones > 0 || r.dividendos > 0);
   const maxAnual = Math.max(1, ...(datos?.anual.flatMap((m) => [m.ingresos, m.gastos]) ?? [1]));
 
   return (
@@ -158,6 +160,7 @@ export default function Resumen() {
                 derecha={aPesos(r.gananciaVentas)}
                 derechaColor={r.gananciaVentas < 0 ? colores.rojo : colores.verde}
               />
+              {r.dividendos > 0 && <Renglon izquierda="Dividendos" detalle="Netos de retención" derecha={aPesos(r.dividendos)} derechaColor={colores.verde} />}
             </Seccion>
           )}
 

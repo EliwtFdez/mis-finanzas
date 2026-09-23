@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { calcularCartera } from '@/domain/finanzas';
+import { calcularCartera, netoDividendoMXN, resumenDividendos } from '@/domain/finanzas';
 import { monedaPorTicker, valuarPosiciones } from '@/domain/valuacion';
 import { preciosDisponibles, preciosEnPesos } from '@/lib/precios';
-import { cargarOperaciones } from '@/lib/datos';
+import { cargarDividendos, cargarOperaciones } from '@/lib/datos';
 import { aNumero, aPesos, fechaLegible } from '@/lib/formato';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
@@ -13,8 +13,8 @@ import { BotonFlotante, Cifra, MensajeError, Pantalla, Renglon, Seccion, Vacio }
 export default function Inversiones() {
   const router = useRouter();
   const { datos, error } = useCarga(async () => {
-    const operaciones = await cargarOperaciones();
-    return { ...calcularCartera(operaciones), monedas: monedaPorTicker(operaciones) };
+    const [operaciones, dividendos] = await Promise.all([cargarOperaciones(), cargarDividendos()]);
+    return { ...calcularCartera(operaciones), monedas: monedaPorTicker(operaciones), dividendos, cobrado: resumenDividendos(dividendos) };
   }, []);
 
   // Precios de mercado aparte: la pantalla no espera a Yahoo Finance.
@@ -97,6 +97,7 @@ export default function Inversiones() {
                   ? `Hoy ${aPesos(p.precio)} · ${g >= 0 ? '+' : ''}${aPesos(g)}${p.rendimiento !== null ? ` (${(p.rendimiento * 100).toFixed(1)} %)` : ''}`
                   : null,
                 p.gananciaRealizada !== 0 ? `Ganancia realizada: ${aPesos(p.gananciaRealizada)}` : null,
+                datos.cobrado.porTicker.get(p.ticker) ? `Dividendos: ${aPesos(datos.cobrado.porTicker.get(p.ticker)!)}` : null,
               ].filter(Boolean);
               return (
                 <Renglon
@@ -124,6 +125,37 @@ export default function Inversiones() {
               ))}
             </Seccion>
           )}
+
+          <Seccion
+            titulo="Dividendos"
+            accion={
+              <Pressable onPress={() => router.push('/dividendo')} hitSlop={10} accessibilityRole="button">
+                <Text style={estilos.accion}>+ Registrar</Text>
+              </Pressable>
+            }
+          >
+            {datos.dividendos.length === 0 ? (
+              <Vacio>Registra los dividendos que cobras para sumarlos a tu rendimiento.</Vacio>
+            ) : (
+              <Renglon izquierda="Total cobrado" detalle="Neto de retenciones, en pesos" derecha={aPesos(datos.cobrado.total)} derechaColor={colores.verde} />
+            )}
+            {datos.dividendos.map((d) => (
+              <Renglon
+                key={d.id}
+                izquierda={d.ticker}
+                detalle={[
+                  fechaLegible(d.fecha, true),
+                  d.moneda === 'USD' ? `US$${aNumero(d.importe)} a ${aNumero(d.tipo_cambio ?? 0)} MXN/USD` : null,
+                  d.retencion ? `retención ${d.moneda === 'USD' ? 'US$' : '$'}${aNumero(d.retencion)}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(', ')}
+                derecha={aPesos(netoDividendoMXN(d))}
+                derechaColor={colores.verde}
+                onPress={() => router.push({ pathname: '/dividendo', params: { id: d.id } })}
+              />
+            ))}
+          </Seccion>
 
           <Seccion titulo="Historial">
             {historial.length === 0 && <Vacio>Sin operaciones todavía.</Vacio>}
@@ -157,4 +189,5 @@ export default function Inversiones() {
 
 const estilos = StyleSheet.create({
   totales: { flexDirection: 'row', gap: espacio.l, paddingVertical: espacio.l },
+  accion: { color: colores.verde, fontWeight: '600', fontSize: 14 },
 });
