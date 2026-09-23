@@ -4,7 +4,19 @@ import { useRouter } from 'expo-router';
 import { useSesion } from '@/lib/sesion';
 import { useBloqueo } from '@/lib/bloqueo';
 import { supabase } from '@/lib/supabase';
-import { borrarTodosMisDatos, cargarResumenDatosUsuario, guardarPerfil, mensajeError, perfilDe } from '@/lib/datos';
+import {
+  borrarTodosMisDatos,
+  cargarCategorias,
+  cargarOperaciones,
+  cargarResumenDatosUsuario,
+  cargarTodosLosMovimientos,
+  guardarPerfil,
+  mensajeError,
+  perfilDe,
+} from '@/lib/datos';
+import { movimientosACsv, operacionesACsv } from '@/domain/csv';
+import { compartirCsv } from '@/lib/exportar';
+import { hoy } from '@/lib/formato';
 import { useCarga } from '@/lib/useCarga';
 import { Boton, Campo, MensajeError, Pantalla, Renglon, Seccion } from '@/components/ui';
 import { colores, espacio, texto } from '@/lib/tema';
@@ -53,6 +65,26 @@ export default function Usuario() {
     if (error) {
       setError(mensajeError(error));
       setProcesando(false);
+    }
+  }
+
+  const [exportando, setExportando] = useState<'movimientos' | 'acciones' | null>(null);
+
+  async function exportar(que: 'movimientos' | 'acciones') {
+    setExportando(que);
+    setError(null);
+    try {
+      if (que === 'movimientos') {
+        const [categorias, movimientos] = await Promise.all([cargarCategorias({ todas: true }), cargarTodosLosMovimientos()]);
+        const nombres = new Map(categorias.map((c) => [c.id, c.nombre]));
+        await compartirCsv(`movimientos-${hoy()}.csv`, movimientosACsv(movimientos, (id) => nombres.get(id) ?? ''));
+      } else {
+        await compartirCsv(`acciones-${hoy()}.csv`, operacionesACsv(await cargarOperaciones()));
+      }
+    } catch (e) {
+      setError(mensajeError(e));
+    } finally {
+      setExportando(null);
     }
   }
 
@@ -146,6 +178,26 @@ export default function Usuario() {
           izquierda="Apple Pay con Atajos ›"
           detalle="Registra cada pago del iPhone como gasto"
           onPress={() => router.push('/atajos')}
+        />
+      </Seccion>
+
+      <Seccion titulo="Respaldo">
+        <Text style={[texto.nota, { paddingTop: espacio.m }]}>
+          Descarga tus datos en CSV para abrirlos en Excel o Numbers, guardarlos en Archivos o mandarlos por correo.
+        </Text>
+        <Boton
+          titulo={exportando === 'movimientos' ? 'Preparando…' : 'Exportar movimientos'}
+          variante="secundario"
+          onPress={() => exportar('movimientos')}
+          deshabilitado={!!exportando || !datos?.movimientos}
+          estilo={{ marginTop: espacio.m }}
+        />
+        <Boton
+          titulo={exportando === 'acciones' ? 'Preparando…' : 'Exportar operaciones de acciones'}
+          variante="secundario"
+          onPress={() => exportar('acciones')}
+          deshabilitado={!!exportando || !datos?.operaciones}
+          estilo={{ marginTop: espacio.s }}
         />
       </Seccion>
 

@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import type { Categoria, Movimiento, Operacion, Presupuesto } from '@/domain/finanzas';
 import type { CompraMsi } from '@/domain/msi';
 import type { Recurrente } from '@/domain/recurrentes';
+import { todasLasFilas } from '@/domain/paginas';
 
 // PostgREST devuelve numeric como número, pero lo normalizamos por si llega como texto.
 const num = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
@@ -26,6 +27,9 @@ export function mensajeError(e: unknown): string {
 function lanzar(error: unknown): never {
   throw new Error(mensajeError(error));
 }
+
+/** Todas las filas de una consulta paginada, con el error traducido. */
+const todas = <T,>(pagina: Parameters<typeof todasLasFilas<T>>[0]) => todasLasFilas(pagina).catch(lanzar);
 
 // ─── Categorías ───────────────────────────────────────────────
 
@@ -61,15 +65,26 @@ export async function borrarCategoria(id: string) {
 const aMovimiento = (r: Record<string, unknown>): Movimiento => ({ ...(r as unknown as Movimiento), importe: num(r.importe) });
 
 export async function cargarMovimientosDelAnio(anio: number): Promise<Movimiento[]> {
-  const { data, error } = await supabase
-    .from('movimientos')
-    .select('*')
-    .gte('fecha', `${anio}-01-01`)
-    .lte('fecha', `${anio}-12-31`)
-    .order('fecha', { ascending: false })
-    .order('created_at', { ascending: false });
-  if (error) lanzar(error);
-  return (data ?? []).map(aMovimiento);
+  const filas = await todas((desde, hasta) =>
+    supabase
+      .from('movimientos')
+      .select('*')
+      .gte('fecha', `${anio}-01-01`)
+      .lte('fecha', `${anio}-12-31`)
+      .order('fecha', { ascending: false })
+      .order('created_at', { ascending: false })
+      .order('id')
+      .range(desde, hasta),
+  );
+  return filas.map(aMovimiento);
+}
+
+/** Todos los movimientos de todos los años (para exportar). */
+export async function cargarTodosLosMovimientos(): Promise<Movimiento[]> {
+  const filas = await todas((desde, hasta) =>
+    supabase.from('movimientos').select('*').order('fecha').order('created_at').order('id').range(desde, hasta),
+  );
+  return filas.map(aMovimiento);
 }
 
 export async function cargarMovimiento(id: string): Promise<Movimiento> {
@@ -291,13 +306,10 @@ const aOperacion = (r: Record<string, unknown>): Operacion => ({
 });
 
 export async function cargarOperaciones(): Promise<Operacion[]> {
-  const { data, error } = await supabase
-    .from('operaciones')
-    .select('*')
-    .order('fecha')
-    .order('created_at');
-  if (error) lanzar(error);
-  return (data ?? []).map(aOperacion);
+  const filas = await todas((desde, hasta) =>
+    supabase.from('operaciones').select('*').order('fecha').order('created_at').order('id').range(desde, hasta),
+  );
+  return filas.map(aOperacion);
 }
 
 export type OperacionNueva = Omit<Operacion, 'id' | 'created_at'>;
