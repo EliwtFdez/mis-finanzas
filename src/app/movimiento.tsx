@@ -3,6 +3,7 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'r
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import type { Categoria, TipoMovimiento } from '@/domain/finanzas';
 import { borrarMovimiento, cargarCategorias, cargarMovimiento, cuentasUsadas, guardarMovimiento } from '@/lib/datos';
+import { avisarPresupuesto } from '@/lib/notificaciones';
 import { hoy, leerNumero } from '@/lib/formato';
 import { colores, espacio, texto } from '@/lib/tema';
 import { Boton, Campo, CampoFecha, Cargando, MensajeError, Opciones } from '@/components/ui';
@@ -70,7 +71,7 @@ export default function FormularioMovimiento() {
     setGuardando(true);
     setError(null);
     try {
-      await guardarMovimiento(
+      const guardado = await guardarMovimiento(
         {
           tipo,
           fecha,
@@ -83,6 +84,8 @@ export default function FormularioMovimiento() {
         },
         id,
       );
+      // Solo los gastos nuevos: editar uno viejo no debe volver a sonar.
+      if (!id && tipo === 'Gasto') avisarPresupuesto(guardado);
       router.back();
     } catch (e) {
       setError((e as Error).message);

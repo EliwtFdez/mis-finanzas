@@ -32,7 +32,8 @@
         {
           "faceIDPermission": "Usamos Face ID para proteger tus finanzas al abrir la app."
         }
-      ]
+      ],
+      "expo-notifications"
     ]
   }
 }

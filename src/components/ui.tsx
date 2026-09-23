@@ -125,7 +125,7 @@ export function Cifra({ etiqueta, valor, color }: { etiqueta: string; valor: num
 }
 
 /** Barra de avance gastado/presupuesto. Se pone roja al pasarse. */
-export function Barra({ valor, maximo, alto = 6 }: { valor: number; maximo: number; alto?: number }) {
+export function Barra({ valor, maximo, alto = 6, color }: { valor: number; maximo: number; alto?: number; color?: string }) {
   const proporcion = maximo > 0 ? Math.min(valor / maximo, 1) : 0;
   const excedido = valor > maximo;
   return (
@@ -135,7 +135,7 @@ export function Barra({ valor, maximo, alto = 6 }: { valor: number; maximo: numb
           width: `${proporcion * 100}%`,
           height: '100%',
           borderRadius: alto / 2,
-          backgroundColor: excedido ? colores.rojo : colores.verde,
+          backgroundColor: color ?? (excedido ? colores.rojo : colores.verde),
         }}
       />
     </View>

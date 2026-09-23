@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { calcularCartera, resumenAnual, resumenMes } from '@/domain/finanzas';
+import { calcularCartera, nivelPresupuesto, resumenAnual, resumenMes, type NivelPresupuesto } from '@/domain/finanzas';
 import { estadoMsi } from '@/domain/msi';
 import { proximosDelMes } from '@/domain/recurrentes';
 import {
@@ -76,7 +76,7 @@ export default function Resumen() {
                   {aPesos(Math.abs(r.presupuestoRestante!))}
                 </Text>
                 <View style={{ marginTop: espacio.m }}>
-                  <Barra valor={r.gastos} maximo={r.presupuesto} alto={10} />
+                  <Barra valor={r.gastos} maximo={r.presupuesto} alto={10} color={colorNivel(nivelPresupuesto(r.gastos, r.presupuesto))} />
                 </View>
                 <Text style={[texto.nota, { marginTop: espacio.s }]}>
                   Gastado {aPesos(r.gastos)} de {aPesos(r.presupuesto)}
@@ -102,17 +102,17 @@ export default function Resumen() {
           <Seccion titulo="Gastos por categoría">
             {lineas.length === 0 && <Vacio>Aún no hay gastos este mes.</Vacio>}
             {lineas.map((l) => {
-              const excedido = l.presupuesto !== null && l.gastado > l.presupuesto;
+              const nivel = nivelPresupuesto(l.gastado, l.presupuesto);
               return (
                 <View key={l.categoria.id} style={estilos.categoria}>
                   <View style={estilos.categoriaFila}>
                     <Text style={texto.cuerpo}>{l.categoria.nombre}</Text>
-                    <Text style={[texto.cifra, excedido && { color: colores.rojo }]}>
+                    <Text style={[texto.cifra, nivel === 'agotado' && { color: colores.rojo }]}>
                       {aPesos(l.gastado)}
                       {l.presupuesto !== null && <Text style={texto.nota}> / {aPesosCortos(l.presupuesto)}</Text>}
                     </Text>
                   </View>
-                  {l.presupuesto !== null && <Barra valor={l.gastado} maximo={l.presupuesto} />}
+                  {l.presupuesto !== null && <Barra valor={l.gastado} maximo={l.presupuesto} color={colorNivel(nivel)} />}
                 </View>
               );
             })}
@@ -182,6 +182,11 @@ export default function Resumen() {
       )}
     </Pantalla>
   );
+}
+
+/** Verde, ámbar desde el 80% y rojo desde el 100%. */
+function colorNivel(nivel: NivelPresupuesto) {
+  return nivel === 'agotado' ? colores.rojo : nivel === 'cerca' ? colores.ambar : colores.verde;
 }
 
 const estilos = StyleSheet.create({

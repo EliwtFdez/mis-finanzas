@@ -106,11 +106,16 @@ export async function cuentasUsadas(): Promise<string[]> {
 
 export type MovimientoNuevo = Omit<Movimiento, 'id' | 'created_at'>;
 
-export async function guardarMovimiento(m: MovimientoNuevo, id?: string) {
-  const { error } = id
-    ? await supabase.from('movimientos').update({ ...m, por_revisar: false }).eq('id', id)
-    : await supabase.from('movimientos').insert(m);
+/** Regresa el id del movimiento (el nuevo, si se creó). */
+export async function guardarMovimiento(m: MovimientoNuevo, id?: string): Promise<string> {
+  if (id) {
+    const { error } = await supabase.from('movimientos').update({ ...m, por_revisar: false }).eq('id', id);
+    if (error) lanzar(error);
+    return id;
+  }
+  const { data, error } = await supabase.from('movimientos').insert(m).select('id').single();
   if (error) lanzar(error);
+  return String(data.id);
 }
 
 /** Guarda una importación completa en una sola operación: o entra todo o no entra nada. */
@@ -213,6 +218,13 @@ export async function borrarRecurrente(id: string) {
 export async function aplicarRecurrentes(): Promise<number> {
   const { data, error } = await supabase.rpc('aplicar_recurrentes');
   return error ? 0 : Number(data ?? 0);
+}
+
+/** Texto de la alerta si ese gasto cruzó el 80% o el 100% de un presupuesto del mes; si no, null. */
+export async function alertaPresupuesto(movimientoId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('alerta_presupuesto', { movimiento: movimientoId });
+  if (error) lanzar(error);
+  return data ? String(data) : null;
 }
 
 // ─── Cuenta del usuario ──────────────────────────────────────

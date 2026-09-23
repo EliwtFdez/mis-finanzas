@@ -136,7 +136,11 @@ export default function Atajos() {
         <Paso n={3}>Agrega la acción «Obtener contenido de URL» y pega la URL de arriba.</Paso>
         <Paso n={4}>Cambia el método a POST. En Encabezados agrega «apikey» con el valor de arriba.</Paso>
         <Paso n={5}>En Cuerpo de la solicitud elige JSON y agrega cuatro campos de texto: «token» con tu código; «monto» con Entrada del atajo → Monto; «comercio» con → Comercio; «tarjeta» con → Tarjeta o pase.</Paso>
-        <Paso n={6}>Haz un pago de prueba y revisa que aparezca en Movimientos.</Paso>
+        <Paso n={6}>
+          Para las alertas de presupuesto: agrega «Obtener valor del diccionario» con la clave «alerta», luego «Si» → «tiene cualquier valor» y
+          dentro «Mostrar notificación» con ese valor. Así el iPhone te avisa al pagar cuando llegas al 80% o al 100% de un presupuesto.
+        </Paso>
+        <Paso n={7}>Haz un pago de prueba y revisa que aparezca en Movimientos.</Paso>
 
         {estado && (
           <Boton titulo="Desconectar" variante="peligro" onPress={pedirDesconectar} deshabilitado={procesando} estilo={{ marginTop: espacio.xxl }} />

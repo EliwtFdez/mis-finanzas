@@ -232,3 +232,21 @@ export function resumenAnual(anio: number, movimientos: Movimiento[]) {
     return { mes, ingresos, gastos, diferencia: redondear(ingresos - gastos) };
   });
 }
+
+// ─────────────────────────────────────────────────────────────
+// Nivel del presupuesto (color de las barras; las alertas del teléfono usan el mismo criterio en SQL)
+// ─────────────────────────────────────────────────────────────
+
+/** 'cerca' desde el 80% de lo presupuestado; 'agotado' al llegar al 100% o pasarse. */
+export type NivelPresupuesto = 'bien' | 'cerca' | 'agotado';
+
+export const UMBRAL_CERCA = 0.8;
+
+export function nivelPresupuesto(gastado: number, presupuesto: number | null): NivelPresupuesto {
+  if (presupuesto === null) return 'bien';
+  if (presupuesto <= 0) return gastado > 0 ? 'agotado' : 'bien';
+  // Redondeado a centavos para que 799.999… no quede abajo del 80% de 1,000.
+  const usado = redondear(gastado) / presupuesto;
+  if (usado >= 1) return 'agotado';
+  return usado >= UMBRAL_CERCA ? 'cerca' : 'bien';
+}
