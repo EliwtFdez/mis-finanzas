@@ -11,6 +11,10 @@ export interface Categoria {
   tipo: TipoMovimiento;
   orden: number;
   activa?: boolean;
+  /** Emoji; null = se muestra la inicial del nombre. */
+  icono?: string | null;
+  /** #RRGGBB de PALETA_CATEGORIAS; null = gris. */
+  color?: string | null;
 }
 
 export interface Movimiento {

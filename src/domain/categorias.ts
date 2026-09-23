@@ -32,3 +32,35 @@ export function moverCategoria(categorias: Categoria[], id: string, direccion: -
 }
 
 export const siguienteOrden = (categorias: Pick<Categoria, 'orden'>[]) => Math.max(0, ...categorias.map((c) => c.orden)) + 1;
+
+// ─── Ícono y color ───────────────────────────────────────────
+
+/** Sin rojo ni ámbar: en la app esos colores significan presupuesto al límite. */
+export const PALETA_CATEGORIAS = ['#2F6B4F', '#1F8A8A', '#3A6EA5', '#4B5BA6', '#7A4E9C', '#A8487A', '#8A6A4A', '#5B6F66'] as const;
+
+export const GRIS_CATEGORIA = '#5B6F66';
+
+export const ICONOS_CATEGORIAS = [
+  '🏠', '🍽️', '🛒', '☕', '🚗', '⛽', '🚌', '✈️',
+  '💡', '📱', '🩺', '💊', '🏋️', '💇', '🎬', '🎮',
+  '🛍️', '👕', '🎁', '🐾', '👶', '📚', '🔧', '📦',
+  '💳', '🏦', '💼', '💰', '📈', '✨',
+] as const;
+
+/** Lo que se dibuja para una categoría: su emoji o, si no tiene, la inicial del nombre. */
+export function aparienciaCategoria(c: Pick<Categoria, 'nombre' | 'icono' | 'color'>) {
+  const icono = c.icono?.trim();
+  return {
+    simbolo: icono || (c.nombre.trim()[0] ?? '?').toLocaleUpperCase('es-MX'),
+    esEmoji: !!icono,
+    color: c.color ?? GRIS_CATEGORIA,
+  };
+}
+
+/** Para una categoría nueva: el color de la paleta que menos se repite entre las de su tipo. */
+export function colorSugerido(categorias: Pick<Categoria, 'tipo' | 'color'>[], tipo: Categoria['tipo']): string {
+  const usos = new Map<string, number>(PALETA_CATEGORIAS.map((c) => [c, 0]));
+  for (const c of categorias) if (c.tipo === tipo && c.color && usos.has(c.color)) usos.set(c.color, usos.get(c.color)! + 1);
+  // En empate gana el primero de la paleta, así el resultado es estable.
+  return PALETA_CATEGORIAS.reduce((mejor, c) => (usos.get(c)! < usos.get(mejor)! ? c : mejor));
+}

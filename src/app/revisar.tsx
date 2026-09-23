@@ -72,7 +72,7 @@ export default function Revisar() {
                     accessibilityRole="button"
                     accessibilityLabel={`${g.descripcion}: ${c.nombre}`}
                   >
-                    <Text style={estilos.chipTexto}>{c.nombre}</Text>
+                    <Text style={estilos.chipTexto}>{[c.icono, c.nombre].filter(Boolean).join(' ')}</Text>
                   </Pressable>
                 ))}
               </View>

@@ -17,7 +17,7 @@ import { aPesos, aPesosCortos, fechaDeCorte, fechaLegible, hoy, MESES_CORTOS } f
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
-import { Barra, BotonFlotante, Cifra, MensajeError, Pantalla, Renglon, Seccion, Vacio } from '@/components/ui';
+import { Barra, BotonFlotante, Cifra, IconoCategoria, MensajeError, Pantalla, Renglon, Seccion, Vacio } from '@/components/ui';
 
 export default function Resumen() {
   const router = useRouter();
@@ -106,7 +106,10 @@ export default function Resumen() {
               return (
                 <View key={l.categoria.id} style={estilos.categoria}>
                   <View style={estilos.categoriaFila}>
-                    <Text style={texto.cuerpo}>{l.categoria.nombre}</Text>
+                    <View style={estilos.categoriaNombre}>
+                      <IconoCategoria categoria={l.categoria} tamano={24} />
+                      <Text style={texto.cuerpo}>{l.categoria.nombre}</Text>
+                    </View>
                     <Text style={[texto.cifra, nivel === 'agotado' && { color: colores.rojo }]}>
                       {aPesos(l.gastado)}
                       {l.presupuesto !== null && <Text style={texto.nota}> / {aPesosCortos(l.presupuesto)}</Text>}
@@ -209,7 +212,8 @@ const estilos = StyleSheet.create({
     borderColor: colores.linea,
   },
   categoria: { paddingVertical: espacio.m, gap: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colores.linea },
-  categoriaFila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  categoriaFila: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  categoriaNombre: { flexDirection: 'row', alignItems: 'center', gap: espacio.s, flexShrink: 1 },
   leyenda: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: espacio.s },
   punto: { width: 8, height: 8, borderRadius: 4 },
   mesFila: { flexDirection: 'row', alignItems: 'center', gap: espacio.s, paddingVertical: 6, paddingHorizontal: 4 },

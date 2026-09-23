@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { moverCategoria, siguienteOrden, validarNombreCategoria } from '../src/domain/categorias.ts';
+import { aparienciaCategoria, colorSugerido, GRIS_CATEGORIA, moverCategoria, PALETA_CATEGORIAS, siguienteOrden, validarNombreCategoria } from '../src/domain/categorias.ts';
 import type { Categoria } from '../src/domain/finanzas.ts';
 
 const categorias: Categoria[] = [
@@ -45,4 +45,32 @@ test('reenumera cuando hay órdenes repetidos', () => {
 test('siguiente orden va al final', () => {
   assert.equal(siguienteOrden(categorias), 12);
   assert.equal(siguienteOrden([]), 1);
+});
+
+test('la apariencia usa el emoji o, si no hay, la inicial en gris', () => {
+  assert.deepEqual(aparienciaCategoria({ nombre: 'Comida', icono: '🍽️', color: '#2F6B4F' }), { simbolo: '🍽️', esEmoji: true, color: '#2F6B4F' });
+  assert.deepEqual(aparienciaCategoria({ nombre: ' mascotas', icono: null, color: null }), { simbolo: 'M', esEmoji: false, color: GRIS_CATEGORIA });
+  assert.equal(aparienciaCategoria({ nombre: 'Éxtra', icono: '  ' }).simbolo, 'É');
+});
+
+test('sugiere el color menos usado entre las categorías del mismo tipo', () => {
+  const [verde, turquesa, azul] = PALETA_CATEGORIAS;
+  assert.equal(colorSugerido([], 'Gasto'), verde);
+  assert.equal(
+    colorSugerido(
+      [
+        { tipo: 'Gasto', color: verde },
+        { tipo: 'Gasto', color: turquesa },
+        { tipo: 'Ingreso', color: azul }, // otro tipo, no cuenta
+        { tipo: 'Gasto', color: null },
+      ],
+      'Gasto',
+    ),
+    azul,
+  );
+});
+
+test('la paleta no incluye el rojo ni el ámbar de las alertas', () => {
+  assert.ok(!PALETA_CATEGORIAS.some((c) => ['#B3362B', '#C98E0A'].includes(c)));
+  assert.ok(PALETA_CATEGORIAS.every((c) => /^#[0-9A-F]{6}$/.test(c)), 'mismo formato que el check de la base');
 });

@@ -133,7 +133,10 @@ export default function FormularioMovimiento() {
           opciones={delTipo.map((c) => c.id)}
           valor={categoriaId}
           onCambio={setCategoriaId}
-          etiquetaDe={(cid) => delTipo.find((c) => c.id === cid)?.nombre ?? ''}
+          etiquetaDe={(cid) => {
+            const c = delTipo.find((x) => x.id === cid);
+            return c ? [c.icono, c.nombre].filter(Boolean).join(' ') : '';
+          }}
         />
 
         <CampoFecha etiqueta="Fecha" valor={fecha} onCambio={setFecha} />

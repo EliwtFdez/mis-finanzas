@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import type { Categoria, TipoMovimiento } from '@/domain/finanzas';
-import { moverCategoria, siguienteOrden, validarNombreCategoria } from '@/domain/categorias';
+import { colorSugerido, ICONOS_CATEGORIAS, moverCategoria, PALETA_CATEGORIAS, siguienteOrden, validarNombreCategoria } from '@/domain/categorias';
 import { actualizarCategoria, borrarCategoria, cargarCategorias, crearCategoria, mensajeError } from '@/lib/datos';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
-import { Boton, Campo, MensajeError, Opciones, Vacio } from '@/components/ui';
+import { Boton, Campo, IconoCategoria, MensajeError, Opciones, Vacio } from '@/components/ui';
 
 const TIPOS = ['Gasto', 'Ingreso'] as const;
 
@@ -16,6 +16,8 @@ export default function Categorias() {
   const [nueva, setNueva] = useState('');
   const [editando, setEditando] = useState<string | null>(null);
   const [nombreEditado, setNombreEditado] = useState('');
+  const [iconoEditado, setIconoEditado] = useState<string | null>(null);
+  const [colorEditado, setColorEditado] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,19 +43,22 @@ export default function Categorias() {
   async function agregar() {
     const problema = validarNombreCategoria(nueva, todas);
     if (problema) return setError(problema);
-    if (await ejecutar(() => crearCategoria({ nombre: nueva, tipo, orden: siguienteOrden(todas) }))) setNueva('');
+    if (await ejecutar(() => crearCategoria({ nombre: nueva, tipo, orden: siguienteOrden(todas), icono: null, color: colorSugerido(todas, tipo) }))) setNueva('');
   }
 
   function empezarEdicion(c: Categoria) {
     setEditando(c.id);
     setNombreEditado(c.nombre);
+    setIconoEditado(c.icono ?? null);
+    setColorEditado(c.color ?? null);
     setError(null);
   }
 
-  async function renombrar(c: Categoria) {
+  async function guardarEdicion(c: Categoria) {
     const problema = validarNombreCategoria(nombreEditado, todas, c.id);
     if (problema) return setError(problema);
-    if (await ejecutar(() => actualizarCategoria(c.id, { nombre: nombreEditado }))) setEditando(null);
+    const cambios = { nombre: nombreEditado, icono: iconoEditado, color: colorEditado };
+    if (await ejecutar(() => actualizarCategoria(c.id, cambios))) setEditando(null);
   }
 
   function mover(c: Categoria, direccion: -1 | 1) {
@@ -80,7 +85,7 @@ export default function Categorias() {
       <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled">
         <Opciones opciones={TIPOS} valor={tipo} onCambio={(t) => { setTipo(t); setEditando(null); }} etiquetaDe={(t) => (t === 'Gasto' ? 'Gastos' : 'Ingresos')} />
         <Text style={[texto.nota, { marginBottom: espacio.m }]}>
-          Toca una categoría para renombrarla, ocultarla o borrarla. Las ocultas no aparecen al registrar, pero conservan sus movimientos.
+          Toca una categoría para cambiar su nombre, ícono o color, ocultarla o borrarla. Las ocultas no aparecen al registrar, pero conservan sus movimientos.
         </Text>
 
         {(errorCarga || error) && <MensajeError>{errorCarga ?? error}</MensajeError>}
@@ -90,9 +95,39 @@ export default function Categorias() {
           <View key={c.id} style={estilos.fila}>
             {editando === c.id ? (
               <View style={{ flex: 1, paddingVertical: espacio.s }}>
-                <Campo etiqueta="Nombre" value={nombreEditado} onChangeText={setNombreEditado} autoFocus maxLength={40} />
+                <Campo etiqueta="Nombre" value={nombreEditado} onChangeText={setNombreEditado} maxLength={40} />
+                <Text style={estilos.etiqueta}>Ícono</Text>
+                <View style={estilos.rejilla}>
+                  {[null, ...ICONOS_CATEGORIAS].map((icono) => (
+                    <Pressable
+                      key={icono ?? 'inicial'}
+                      onPress={() => setIconoEditado(icono)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: iconoEditado === icono }}
+                      accessibilityLabel={icono ?? 'Inicial del nombre'}
+                      style={[estilos.celda, iconoEditado === icono && estilos.celdaActiva]}
+                    >
+                      <IconoCategoria categoria={{ nombre: nombreEditado || c.nombre, icono, color: colorEditado }} tamano={32} />
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={estilos.etiqueta}>Color</Text>
+                <View style={[estilos.rejilla, { marginBottom: espacio.l }]}>
+                  {PALETA_CATEGORIAS.map((color) => (
+                    <Pressable
+                      key={color}
+                      onPress={() => setColorEditado(color)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: colorEditado === color }}
+                      accessibilityLabel={`Color ${color}`}
+                      style={[estilos.celda, colorEditado === color && estilos.celdaActiva]}
+                    >
+                      <View style={[estilos.muestra, { backgroundColor: color }]} />
+                    </Pressable>
+                  ))}
+                </View>
                 <View style={estilos.acciones}>
-                  <Boton titulo="Guardar" onPress={() => renombrar(c)} deshabilitado={ocupado} estilo={{ flex: 1 }} />
+                  <Boton titulo="Guardar" onPress={() => guardarEdicion(c)} deshabilitado={ocupado} estilo={{ flex: 1 }} />
                   <Boton titulo="Cancelar" variante="secundario" onPress={() => setEditando(null)} estilo={{ flex: 1 }} />
                 </View>
                 <View style={[estilos.acciones, { marginTop: espacio.s }]}>
@@ -108,9 +143,12 @@ export default function Categorias() {
               </View>
             ) : (
               <>
-                <Pressable style={{ flex: 1, paddingVertical: espacio.m }} onPress={() => empezarEdicion(c)} accessibilityRole="button">
-                  <Text style={[texto.cuerpo, c.activa === false && estilos.oculta]}>{c.nombre}</Text>
-                  {c.activa === false && <Text style={texto.nota}>Oculta</Text>}
+                <Pressable style={estilos.nombre} onPress={() => empezarEdicion(c)} accessibilityRole="button">
+                  <IconoCategoria categoria={c} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[texto.cuerpo, c.activa === false && estilos.oculta]}>{c.nombre}</Text>
+                    {c.activa === false && <Text style={texto.nota}>Oculta</Text>}
+                  </View>
                 </Pressable>
                 <Flecha texto="↑" deshabilitada={ocupado || i === 0} onPress={() => mover(c, -1)} etiqueta={`Subir ${c.nombre}`} />
                 <Flecha texto="↓" deshabilitada={ocupado || i === delTipo.length - 1} onPress={() => mover(c, 1)} etiqueta={`Bajar ${c.nombre}`} />
@@ -148,7 +186,13 @@ function Flecha({ texto: t, onPress, deshabilitada, etiqueta }: { texto: string;
 const estilos = StyleSheet.create({
   contenido: { padding: espacio.l, paddingBottom: 48 },
   fila: { flexDirection: 'row', alignItems: 'center', gap: espacio.xs, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colores.linea },
+  nombre: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: espacio.m, paddingVertical: espacio.m },
   oculta: { color: colores.tintaSuave, textDecorationLine: 'line-through' },
+  etiqueta: { fontSize: 13, fontWeight: '600', color: colores.tintaSuave, marginBottom: 6 },
+  rejilla: { flexDirection: 'row', flexWrap: 'wrap', gap: espacio.xs, marginBottom: espacio.m },
+  celda: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, borderWidth: 2, borderColor: 'transparent' },
+  celdaActiva: { borderColor: colores.tinta },
+  muestra: { width: 28, height: 28, borderRadius: 14 },
   acciones: { flexDirection: 'row', gap: espacio.s },
   flecha: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: colores.hoja, borderWidth: 1, borderColor: colores.linea },
   flechaTexto: { fontSize: 16, color: colores.verde, fontWeight: '700' },

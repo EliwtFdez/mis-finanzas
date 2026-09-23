@@ -16,6 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colores, espacio, texto } from '@/lib/tema';
 import { MESES, aPesos, fechaATexto, fechaLegible, textoAFecha } from '@/lib/formato';
 import { usePeriodo } from '@/lib/periodo';
+import { aparienciaCategoria } from '@/domain/categorias';
+import type { Categoria } from '@/domain/finanzas';
 
 // ─── Estructura de pantalla ───────────────────────────────────
 
@@ -81,6 +83,7 @@ export function Renglon({
   derechaColor,
   onPress,
   aviso,
+  icono,
 }: {
   izquierda: string;
   detalle?: string;
@@ -88,9 +91,12 @@ export function Renglon({
   derechaColor?: string;
   onPress?: () => void;
   aviso?: string;
+  /** Va a la izquierda, p. ej. <IconoCategoria />. */
+  icono?: ReactNode;
 }) {
   const contenido = (
     <View style={estilos.renglon}>
+      {icono}
       <View style={{ flex: 1 }}>
         <Text style={texto.cuerpo} numberOfLines={1}>
           {izquierda}
@@ -138,6 +144,26 @@ export function Barra({ valor, maximo, alto = 6, color }: { valor: number; maxim
           backgroundColor: color ?? (excedido ? colores.rojo : colores.verde),
         }}
       />
+    </View>
+  );
+}
+
+/** Círculo con el emoji de la categoría (o su inicial) sobre un tinte de su color. */
+export function IconoCategoria({ categoria, tamano = 28 }: { categoria: Pick<Categoria, 'nombre' | 'icono' | 'color'>; tamano?: number }) {
+  const a = aparienciaCategoria(categoria);
+  return (
+    <View
+      style={{
+        width: tamano,
+        height: tamano,
+        borderRadius: tamano / 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: a.color + '26', // ~15% de opacidad
+      }}
+      accessible={false}
+    >
+      <Text style={{ fontSize: tamano * (a.esEmoji ? 0.5 : 0.45), fontWeight: '700', color: a.color }}>{a.simbolo}</Text>
     </View>
   );
 }

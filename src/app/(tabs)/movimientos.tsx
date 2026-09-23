@@ -8,7 +8,7 @@ import { aPesos, fechaLegible } from '@/lib/formato';
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
-import { Boton, BotonFlotante, MensajeError, Opciones, Pantalla, Renglon, Seccion, Vacio } from '@/components/ui';
+import { Boton, BotonFlotante, IconoCategoria, MensajeError, Opciones, Pantalla, Renglon, Seccion, Vacio } from '@/components/ui';
 
 const FILTROS = ['Todos', 'Gastos', 'Ingresos'] as const;
 
@@ -22,7 +22,7 @@ export default function Movimientos() {
   const { datos, error } = useCarga(async () => {
     await aplicarRecurrentes();
     const [categorias, movimientos] = await Promise.all([cargarCategorias({ todas: true }), cargarMovimientosDelAnio(anio)]);
-    return { categorias: new Map(categorias.map((c) => [c.id, c.nombre])), movimientos };
+    return { categorias: new Map(categorias.map((c) => [c.id, c])), movimientos };
   }, [anio]);
 
   // Al buscar se recorre todo el año, no solo el mes elegido.
@@ -31,7 +31,7 @@ export default function Movimientos() {
       .filter((m) => buscando || enMes(m.fecha, anio, mes))
       .filter((m) => filtro === 'Todos' || (filtro === 'Gastos' ? m.tipo === 'Gasto' : m.tipo === 'Ingreso')),
     consulta,
-    (id) => datos?.categorias.get(id) ?? '',
+    (id) => datos?.categorias.get(id)?.nombre ?? '',
   );
   const totalBusqueda = delMes.reduce((s, m) => s + (m.tipo === 'Ingreso' ? m.importe : -m.importe), 0);
 
@@ -89,11 +89,13 @@ export default function Movimientos() {
             accion={<Text style={[texto.nota, { fontVariant: ['tabular-nums'] }]}>{aPesos(neto)}</Text>}
           >
             {lista.map((m) => {
-              const categoria = datos!.categorias.get(m.categoria_id) ?? '';
+              const cat = datos!.categorias.get(m.categoria_id);
+              const categoria = cat?.nombre ?? '';
               const detalle = [m.descripcion ? categoria : null, m.medio_pago, m.cuenta].filter(Boolean).join(', ');
               return (
                 <Renglon
                   key={m.id}
+                  icono={cat && <IconoCategoria categoria={cat} />}
                   izquierda={m.descripcion || categoria}
                   detalle={detalle}
                   derecha={(m.tipo === 'Gasto' ? '−' : '+') + aPesos(m.importe)}

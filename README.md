@@ -51,7 +51,7 @@ Escanea el código QR con **Expo Go** en tu teléfono. Todas las librerías que 
 | **Gastos e ingresos fijos** (renta, suscripciones, sueldo) que se registran solos cada mes | Usuario → Organización, y *Fijos por llegar* en Resumen |
 | **Meses sin intereses**: una compra genera una mensualidad por mes | Movimientos → Meses sin intereses |
 | **Alertas de presupuesto** en el teléfono al cruzar el 80% y el 100% (una vez por umbral y mes); la barra se pinta ámbar o roja | Notificación al registrar el gasto; con Apple Pay, la muestra el atajo |
-| **Categorías** editables: agregar, renombrar, ordenar, ocultar | Usuario → Organización, o Presupuesto |
+| **Categorías** editables: agregar, renombrar, ordenar, ocultar, con ícono y color | Usuario → Organización, o Presupuesto |
 | **Búsqueda** por comercio, categoría, cuenta o monto en todo el año | Movimientos |
 | **Valor de mercado** y ganancia no realizada con precios de Yahoo Finance | Acciones |
 | **Exportar a CSV** (Excel/Numbers) | Usuario → Respaldo |

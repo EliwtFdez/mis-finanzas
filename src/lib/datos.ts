@@ -35,19 +35,19 @@ const todas = <T,>(pagina: Parameters<typeof todasLasFilas<T>>[0]) => todasLasFi
 
 /** Categorías activas; con `todas` también las ocultas (para mostrar nombres de movimientos viejos). */
 export async function cargarCategorias({ todas = false } = {}): Promise<Categoria[]> {
-  let consulta = supabase.from('categorias').select('id, nombre, tipo, orden, activa').order('orden');
+  let consulta = supabase.from('categorias').select('id, nombre, tipo, orden, activa, icono, color').order('orden');
   if (!todas) consulta = consulta.eq('activa', true);
   const { data, error } = await consulta;
   if (error) lanzar(error);
   return data as Categoria[];
 }
 
-export async function crearCategoria(c: Pick<Categoria, 'nombre' | 'tipo' | 'orden'>) {
+export async function crearCategoria(c: Pick<Categoria, 'nombre' | 'tipo' | 'orden' | 'icono' | 'color'>) {
   const { error } = await supabase.from('categorias').insert({ ...c, nombre: c.nombre.trim() });
   if (error) lanzar(error);
 }
 
-export async function actualizarCategoria(id: string, cambios: Partial<Pick<Categoria, 'nombre' | 'orden' | 'activa'>>) {
+export async function actualizarCategoria(id: string, cambios: Partial<Pick<Categoria, 'nombre' | 'orden' | 'activa' | 'icono' | 'color'>>) {
   const { error } = await supabase
     .from('categorias')
     .update(cambios.nombre === undefined ? cambios : { ...cambios, nombre: cambios.nombre.trim() })
