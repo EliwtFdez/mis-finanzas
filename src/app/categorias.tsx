@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import type { Categoria, TipoMovimiento } from '@/domain/finanzas';
-import { colorSugerido, ICONOS_CATEGORIAS, moverCategoria, PALETA_CATEGORIAS, siguienteOrden, validarNombreCategoria } from '@/domain/categorias';
+import { colorSugerido, GRIS_CATEGORIA, ICONOS_CATEGORIAS, NOMBRES_COLOR, moverCategoria, PALETA_CATEGORIAS, siguienteOrden, validarNombreCategoria } from '@/domain/categorias';
 import { actualizarCategoria, borrarCategoria, cargarCategorias, crearCategoria, mensajeError } from '@/lib/datos';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
 import { Boton, Campo, IconoCategoria, MensajeError, Opciones, Vacio } from '@/components/ui';
 
 const TIPOS = ['Gasto', 'Ingreso'] as const;
+
 
 export default function Categorias() {
   const { datos: categorias, error: errorCarga, recargar } = useCarga(() => cargarCategorias({ todas: true }), []);
@@ -113,16 +114,16 @@ export default function Categorias() {
                 </View>
                 <Text style={estilos.etiqueta}>Color</Text>
                 <View style={[estilos.rejilla, { marginBottom: espacio.l }]}>
-                  {PALETA_CATEGORIAS.map((color) => (
+                  {[null, ...PALETA_CATEGORIAS].map((color) => (
                     <Pressable
-                      key={color}
+                      key={color ?? 'sin-color'}
                       onPress={() => setColorEditado(color)}
                       accessibilityRole="radio"
                       accessibilityState={{ selected: colorEditado === color }}
-                      accessibilityLabel={`Color ${color}`}
+                      accessibilityLabel={color ? `Color ${NOMBRES_COLOR[color] ?? color}` : 'Sin color'}
                       style={[estilos.celda, colorEditado === color && estilos.celdaActiva]}
                     >
-                      <View style={[estilos.muestra, { backgroundColor: color }]} />
+                      <View style={[estilos.muestra, { backgroundColor: color ?? GRIS_CATEGORIA }]} />
                     </Pressable>
                   ))}
                 </View>

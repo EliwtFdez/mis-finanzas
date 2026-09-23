@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { aparienciaCategoria, colorSugerido, GRIS_CATEGORIA, moverCategoria, PALETA_CATEGORIAS, siguienteOrden, validarNombreCategoria } from '../src/domain/categorias.ts';
+import { aparienciaCategoria, colorSugerido, GRIS_CATEGORIA, moverCategoria, NOMBRES_COLOR, PALETA_CATEGORIAS, siguienteOrden, validarNombreCategoria } from '../src/domain/categorias.ts';
 import type { Categoria } from '../src/domain/finanzas.ts';
 
 const categorias: Categoria[] = [
@@ -73,4 +73,8 @@ test('sugiere el color menos usado entre las categorías del mismo tipo', () => 
 test('la paleta no incluye el rojo ni el ámbar de las alertas', () => {
   assert.ok(!PALETA_CATEGORIAS.some((c) => ['#B3362B', '#C98E0A'].includes(c)));
   assert.ok(PALETA_CATEGORIAS.every((c) => /^#[0-9A-F]{6}$/.test(c)), 'mismo formato que el check de la base');
+});
+
+test('cada color de la paleta tiene nombre para lectores de pantalla', () => {
+  for (const c of PALETA_CATEGORIAS) assert.ok(NOMBRES_COLOR[c], c);
 });

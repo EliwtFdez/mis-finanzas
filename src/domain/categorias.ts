@@ -42,6 +42,16 @@ export const siguienteOrden = (categorias: Pick<Categoria, 'orden'>[]) => Math.m
  */
 export const PALETA_CATEGORIAS = ['#2A78D6', '#EB6834', '#1BAF7A', '#E87BA4', '#008300', '#4A3AA7'] as const;
 
+/** Para VoiceOver: «Color azul» dice más que «Color #2A78D6». */
+export const NOMBRES_COLOR: Record<string, string> = {
+  '#2A78D6': 'azul',
+  '#EB6834': 'naranja',
+  '#1BAF7A': 'verde agua',
+  '#E87BA4': 'rosa',
+  '#008300': 'verde',
+  '#4A3AA7': 'violeta',
+};
+
 /** Neutro para categorías sin color y para «Otras». */
 export const GRIS_CATEGORIA = '#8A948F';
 
