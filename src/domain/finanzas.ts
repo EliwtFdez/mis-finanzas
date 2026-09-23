@@ -28,6 +28,8 @@ export interface Movimiento {
   /** Mensualidad de una compra a meses sin intereses. */
   compra_msi_id?: string | null;
   numero_pago?: number | null;
+  /** Generado por un gasto o ingreso fijo. */
+  recurrente_id?: string | null;
   created_at?: string;
 }
 

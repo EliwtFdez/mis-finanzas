@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { Categoria, Movimiento, Operacion, Presupuesto } from '@/domain/finanzas';
 import type { CompraMsi } from '@/domain/msi';
+import type { Recurrente } from '@/domain/recurrentes';
 
 // PostgREST devuelve numeric como número, pero lo normalizamos por si llega como texto.
 const num = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
@@ -166,6 +167,37 @@ export async function crearCompraMsi(c: Omit<CompraMsi, 'id' | 'pagos'>) {
 export async function borrarCompraMsi(id: string) {
   const { error } = await supabase.from('compras_msi').delete().eq('id', id);
   if (error) lanzar(error);
+}
+
+// ─── Gastos e ingresos fijos ──────────────────────────────────
+
+export async function cargarRecurrentes(): Promise<Recurrente[]> {
+  const { data, error } = await supabase
+    .from('recurrentes')
+    .select('id, tipo, descripcion, importe, categoria_id, dia, medio_pago, cuenta, activo, desde, aplicado_hasta')
+    .order('dia');
+  if (error) lanzar(error);
+  return (data ?? []).map((r) => ({ ...(r as Recurrente), importe: num(r.importe) }));
+}
+
+export type RecurrenteNuevo = Omit<Recurrente, 'id' | 'desde' | 'aplicado_hasta'>;
+
+export async function guardarRecurrente(r: RecurrenteNuevo, id?: string) {
+  const { error } = id
+    ? await supabase.from('recurrentes').update(r).eq('id', id)
+    : await supabase.from('recurrentes').insert(r);
+  if (error) lanzar(error);
+}
+
+export async function borrarRecurrente(id: string) {
+  const { error } = await supabase.from('recurrentes').delete().eq('id', id);
+  if (error) lanzar(error);
+}
+
+/** Registra los fijos que ya vencieron. Devuelve cuántos movimientos creó (0 si falla: no bloquea la pantalla). */
+export async function aplicarRecurrentes(): Promise<number> {
+  const { data, error } = await supabase.rpc('aplicar_recurrentes');
+  return error ? 0 : Number(data ?? 0);
 }
 
 // ─── Cuenta del usuario ──────────────────────────────────────

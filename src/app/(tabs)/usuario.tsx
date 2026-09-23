@@ -137,6 +137,8 @@ export default function Usuario() {
 
       <Seccion titulo="Organización">
         <Renglon izquierda="Categorías ›" detalle="Agrega, renombra, ordena u oculta" onPress={() => router.push('/categorias')} />
+        <Renglon izquierda="Gastos e ingresos fijos ›" detalle="Renta, suscripciones, sueldo…" onPress={() => router.push('/fijos')} />
+        <Renglon izquierda="Meses sin intereses ›" detalle="Compras a meses y lo que falta por pagar" onPress={() => router.push('/msi')} />
       </Seccion>
 
       <Seccion titulo="Registro automático">

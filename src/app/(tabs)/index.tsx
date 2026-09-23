@@ -2,8 +2,18 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { calcularCartera, resumenAnual, resumenMes } from '@/domain/finanzas';
 import { estadoMsi } from '@/domain/msi';
-import { cargarCategorias, cargarComprasMsi, cargarMovimientosDelAnio, cargarOperaciones, cargarPresupuestos, contarPorRevisar } from '@/lib/datos';
-import { aPesos, aPesosCortos, fechaDeCorte, MESES_CORTOS } from '@/lib/formato';
+import { proximosDelMes } from '@/domain/recurrentes';
+import {
+  aplicarRecurrentes,
+  cargarCategorias,
+  cargarComprasMsi,
+  cargarMovimientosDelAnio,
+  cargarOperaciones,
+  cargarPresupuestos,
+  cargarRecurrentes,
+  contarPorRevisar,
+} from '@/lib/datos';
+import { aPesos, aPesosCortos, fechaDeCorte, fechaLegible, hoy, MESES_CORTOS } from '@/lib/formato';
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
@@ -14,13 +24,16 @@ export default function Resumen() {
   const { anio, mes } = usePeriodo();
 
   const { datos, error } = useCarga(async () => {
-    const [categorias, movimientos, operaciones, presupuestos, porRevisar, comprasMsi] = await Promise.all([
+    // Primero registra los fijos que ya vencieron para que aparezcan en los totales.
+    await aplicarRecurrentes();
+    const [categorias, movimientos, operaciones, presupuestos, porRevisar, comprasMsi, recurrentes] = await Promise.all([
       cargarCategorias({ todas: true }),
       cargarMovimientosDelAnio(anio),
       cargarOperaciones(),
       cargarPresupuestos(anio, mes),
       contarPorRevisar().catch(() => 0),
       cargarComprasMsi().catch(() => []),
+      cargarRecurrentes().catch(() => []),
     ]);
     const cartera = calcularCartera(operaciones);
     return {
@@ -29,6 +42,8 @@ export default function Resumen() {
       porRevisar,
       // Se evalúa al último día del mes elegido, o a hoy si es el mes en curso.
       msi: estadoMsi(comprasMsi, fechaDeCorte(anio, mes)),
+      // Solo tiene sentido en el mes en curso.
+      proximosFijos: proximosDelMes(recurrentes, hoy()).filter((p) => p.fecha.startsWith(fechaDeCorte(anio, mes).slice(0, 7))),
     };
   }, [anio, mes]);
 
@@ -102,6 +117,21 @@ export default function Resumen() {
               );
             })}
           </Seccion>
+
+          {datos!.proximosFijos.length > 0 && (
+            <Seccion titulo="Fijos por llegar este mes">
+              {datos!.proximosFijos.map(({ recurrente: f, fecha }) => (
+                <Renglon
+                  key={f.id}
+                  izquierda={f.descripcion}
+                  detalle={fechaLegible(fecha)}
+                  derecha={(f.tipo === 'Gasto' ? '−' : '+') + aPesos(f.importe)}
+                  derechaColor={f.tipo === 'Gasto' ? colores.tinta : colores.verde}
+                  onPress={() => router.push('/fijos')}
+                />
+              ))}
+            </Seccion>
+          )}
 
           {!!datos!.msi.activas && (
             <Seccion titulo="Meses sin intereses">

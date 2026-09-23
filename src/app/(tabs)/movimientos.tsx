@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { enMes, type Movimiento } from '@/domain/finanzas';
 import { buscarMovimientos } from '@/domain/busqueda';
-import { cargarCategorias, cargarMovimientosDelAnio } from '@/lib/datos';
+import { aplicarRecurrentes, cargarCategorias, cargarMovimientosDelAnio } from '@/lib/datos';
 import { aPesos, fechaLegible } from '@/lib/formato';
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
@@ -20,6 +20,7 @@ export default function Movimientos() {
   const buscando = consulta.trim().length > 0;
 
   const { datos, error } = useCarga(async () => {
+    await aplicarRecurrentes();
     const [categorias, movimientos] = await Promise.all([cargarCategorias({ todas: true }), cargarMovimientosDelAnio(anio)]);
     return { categorias: new Map(categorias.map((c) => [c.id, c.nombre])), movimientos };
   }, [anio]);
@@ -97,7 +98,15 @@ export default function Movimientos() {
                   detalle={detalle}
                   derecha={(m.tipo === 'Gasto' ? '−' : '+') + aPesos(m.importe)}
                   derechaColor={m.tipo === 'Gasto' ? colores.tinta : colores.verde}
-                  aviso={m.por_revisar ? 'Por revisar: elige su categoría' : m.compra_msi_id ? 'Mensualidad a meses sin intereses' : undefined}
+                  aviso={
+                    m.por_revisar
+                      ? 'Por revisar: elige su categoría'
+                      : m.compra_msi_id
+                        ? 'Mensualidad a meses sin intereses'
+                        : m.recurrente_id
+                          ? 'Fijo mensual'
+                          : undefined
+                  }
                   onPress={() => router.push({ pathname: '/movimiento', params: { id: m.id } })}
                 />
               );
