@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { etiquetaCategoria } from '@/domain/categorias';
 import type { Categoria, TipoMovimiento } from '@/domain/finanzas';
 import { borrarMovimiento, cargarCategorias, cargarMovimiento, cuentasUsadas, guardarMovimiento } from '@/lib/datos';
 import { avisarPresupuesto } from '@/lib/notificaciones';
@@ -85,7 +86,7 @@ export default function FormularioMovimiento() {
         id,
       );
       // Solo los gastos nuevos: editar uno viejo no debe volver a sonar.
-      if (!id && tipo === 'Gasto') avisarPresupuesto(guardado);
+      if (!id && tipo === 'Gasto') avisarPresupuesto(guardado, fecha);
       router.back();
     } catch (e) {
       setError((e as Error).message);
@@ -135,7 +136,7 @@ export default function FormularioMovimiento() {
           onCambio={setCategoriaId}
           etiquetaDe={(cid) => {
             const c = delTipo.find((x) => x.id === cid);
-            return c ? [c.icono, c.nombre].filter(Boolean).join(' ') : '';
+            return c ? etiquetaCategoria(c) : '';
           }}
         />
 

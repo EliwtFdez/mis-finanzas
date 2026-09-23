@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { alertaPresupuesto } from './datos';
+import { hoy } from './formato';
 
 const CANAL = 'presupuesto';
 const disponibles = Platform.OS !== 'web';
@@ -33,11 +34,12 @@ async function permitidas() {
 
 /**
  * Notifica si el gasto recién registrado cruzó el 80% o el 100% de un presupuesto del mes.
+ * Solo por gastos del mes en curso: una alerta sobre un mes pasado confunde.
  * El permiso se pide la primera vez que hay algo que avisar. Nunca lanza: una alerta
  * que no sale no debe impedir registrar el gasto.
  */
-export async function avisarPresupuesto(movimientoId: string) {
-  if (!disponibles) return;
+export async function avisarPresupuesto(movimientoId: string, fecha: string) {
+  if (!disponibles || fecha.slice(0, 7) !== hoy().slice(0, 7)) return;
   try {
     const texto = await alertaPresupuesto(movimientoId);
     if (!texto || !(await permitidas())) return;

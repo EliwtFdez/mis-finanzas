@@ -174,8 +174,9 @@ export async function cargarComprasMsi(): Promise<CompraMsi[]> {
   }));
 }
 
-export async function crearCompraMsi(c: Omit<CompraMsi, 'id' | 'pagos'>) {
-  const { error } = await supabase.rpc('crear_compra_msi', {
+/** Regresa el id de la primera mensualidad (la que cae en el mes de la compra). */
+export async function crearCompraMsi(c: Omit<CompraMsi, 'id' | 'pagos'>): Promise<string | null> {
+  const { data: compraId, error } = await supabase.rpc('crear_compra_msi', {
     p_fecha: c.fecha,
     p_descripcion: c.descripcion,
     p_importe_total: c.importe_total,
@@ -184,6 +185,8 @@ export async function crearCompraMsi(c: Omit<CompraMsi, 'id' | 'pagos'>) {
     p_cuenta: c.cuenta,
   });
   if (error) lanzar(error);
+  const { data } = await supabase.from('movimientos').select('id').eq('compra_msi_id', compraId).eq('numero_pago', 1).maybeSingle();
+  return data ? String(data.id) : null;
 }
 
 /** Borra la compra y todas sus mensualidades. */

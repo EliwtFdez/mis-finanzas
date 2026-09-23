@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
+import { etiquetaCategoria } from '@/domain/categorias';
 import { calendarioMsi, estadoMsi, type EstadoCompraMsi } from '@/domain/msi';
 import { borrarCompraMsi, cargarCategorias, cargarComprasMsi, crearCompraMsi, mensajeError } from '@/lib/datos';
 import { aPesos, fechaLegible, hoy, leerNumero } from '@/lib/formato';
+import { avisarPresupuesto } from '@/lib/notificaciones';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
 import { Barra, Boton, Campo, CampoFecha, Cifra, MensajeError, Opciones, Renglon, Seccion, Vacio } from '@/components/ui';
@@ -43,7 +45,7 @@ export default function MesesSinIntereses() {
     setGuardando(true);
     setError(null);
     try {
-      await crearCompraMsi({
+      const primerPago = await crearCompraMsi({
         fecha,
         descripcion: descripcion.trim(),
         importe_total: total!,
@@ -51,6 +53,8 @@ export default function MesesSinIntereses() {
         categoria_id: categoriaElegida!,
         cuenta: cuenta.trim() || null,
       });
+      // La primera mensualidad es un gasto de este mes: puede cruzar un presupuesto.
+      if (primerPago) avisarPresupuesto(primerPago, fecha);
       setFormulario(false);
       setDescripcion('');
       setImporte('');
@@ -115,7 +119,7 @@ export default function MesesSinIntereses() {
                 opciones={datos.categorias.map((c) => c.id)}
                 valor={categoriaElegida}
                 onCambio={setCategoriaId}
-                etiquetaDe={(id) => datos.categorias.find((c) => c.id === id)?.nombre ?? ''}
+                etiquetaDe={(id) => { const c = datos.categorias.find((x) => x.id === id); return c ? etiquetaCategoria(c) : ''; }}
               />
             )}
             <Campo etiqueta="Tarjeta" value={cuenta} onChangeText={setCuenta} placeholder="Ej. BBVA Azul" />

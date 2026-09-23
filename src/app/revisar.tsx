@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import { etiquetaCategoria } from '@/domain/categorias';
 import { agruparPorComercio, type GrupoComercio } from '@/domain/revision';
 import { cargarCategorias, cargarPorRevisar, marcarRevisados, mensajeError } from '@/lib/datos';
 import { aPesos, fechaLegible } from '@/lib/formato';
@@ -72,7 +73,7 @@ export default function Revisar() {
                     accessibilityRole="button"
                     accessibilityLabel={`${g.descripcion}: ${c.nombre}`}
                   >
-                    <Text style={estilos.chipTexto}>{[c.icono, c.nombre].filter(Boolean).join(' ')}</Text>
+                    <Text style={estilos.chipTexto}>{etiquetaCategoria(c)}</Text>
                   </Pressable>
                 ))}
               </View>

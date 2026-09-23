@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
+import { etiquetaCategoria } from '@/domain/categorias';
 import type { TipoMovimiento } from '@/domain/finanzas';
 import { proximaFecha, type Recurrente } from '@/domain/recurrentes';
 import { borrarRecurrente, cargarCategorias, cargarRecurrentes, guardarRecurrente, mensajeError } from '@/lib/datos';
@@ -127,7 +128,7 @@ export default function Fijos() {
               opciones={delTipo.map((c) => c.id)}
               valor={categoriaId}
               onCambio={setCategoriaId}
-              etiquetaDe={(id) => delTipo.find((c) => c.id === id)?.nombre ?? ''}
+              etiquetaDe={(id) => { const c = delTipo.find((x) => x.id === id); return c ? etiquetaCategoria(c) : ''; }}
             />
             <Opciones etiqueta="Medio de pago" opciones={MEDIOS} valor={medio} onCambio={setMedio} etiquetaDe={nombreMedio} />
             <Campo etiqueta="Cuenta" value={cuenta} onChangeText={setCuenta} placeholder="Opcional" />

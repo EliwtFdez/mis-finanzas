@@ -79,3 +79,6 @@ export function colorSugerido(categorias: Pick<Categoria, 'tipo' | 'color'>[], t
   // En empate gana el primero de la paleta, así el resultado es estable.
   return PALETA_CATEGORIAS.reduce((mejor, c) => (usos.get(c)! < usos.get(mejor)! ? c : mejor));
 }
+
+/** «🍽️ Comida» para selectores de texto; sin emoji, solo el nombre. */
+export const etiquetaCategoria = (c: Pick<Categoria, 'nombre' | 'icono'>) => (c.icono ? `${c.icono} ${c.nombre}` : c.nombre);
