@@ -26,11 +26,14 @@ export function Pantalla({
   conMes = true,
   children,
   pie,
+  lista = false,
 }: {
   titulo: string;
   conMes?: boolean;
   children: ReactNode;
   pie?: ReactNode;
+  /** El contenido trae su propia lista virtualizada (usa `contenidoPantalla` como contentContainerStyle). */
+  lista?: boolean;
 }) {
   return (
     <SafeAreaView style={estilos.pantalla} edges={['top']}>
@@ -38,9 +41,13 @@ export function Pantalla({
         <Text style={texto.titulo}>{titulo}</Text>
         {conMes && <SelectorMes />}
       </View>
-      <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled">
-        {children}
-      </ScrollView>
+      {lista ? (
+        <View style={{ flex: 1 }}>{children}</View>
+      ) : (
+        <ScrollView contentContainerStyle={estilos.contenido} keyboardShouldPersistTaps="handled">
+          {children}
+        </ScrollView>
+      )}
       {pie}
     </SafeAreaView>
   );
@@ -66,11 +73,18 @@ export function SelectorMes() {
 export function Seccion({ titulo, accion, children }: { titulo: string; accion?: ReactNode; children: ReactNode }) {
   return (
     <View style={estilos.seccion}>
-      <View style={estilos.seccionEncabezado}>
-        <Text style={texto.seccion}>{titulo}</Text>
-        {accion}
-      </View>
+      <EncabezadoSeccion titulo={titulo} accion={accion} />
       {children}
+    </View>
+  );
+}
+
+/** El título subrayado de una Seccion; suelto sirve de encabezado en una SectionList. */
+export function EncabezadoSeccion({ titulo, accion }: { titulo: string; accion?: ReactNode }) {
+  return (
+    <View style={estilos.seccionEncabezado}>
+      <Text style={texto.seccion}>{titulo}</Text>
+      {accion}
     </View>
   );
 }
@@ -319,6 +333,8 @@ export function CampoFecha({ etiqueta, valor, onCambio }: { etiqueta: string; va
   );
 }
 
+export const contenidoPantalla = { paddingHorizontal: espacio.l, paddingBottom: 120 } as const;
+
 const estilos = StyleSheet.create({
   pantalla: { flex: 1, backgroundColor: colores.papel },
   encabezado: {
@@ -329,7 +345,7 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  contenido: { paddingHorizontal: espacio.l, paddingBottom: 120 },
+  contenido: contenidoPantalla,
   selectorMes: { flexDirection: 'row', alignItems: 'center' },
   flecha: { paddingHorizontal: espacio.s },
   flechaTexto: { fontSize: 24, color: colores.verde, lineHeight: 26 },
