@@ -10,6 +10,7 @@ export interface Categoria {
   nombre: string;
   tipo: TipoMovimiento;
   orden: number;
+  activa?: boolean;
 }
 
 export interface Movimiento {

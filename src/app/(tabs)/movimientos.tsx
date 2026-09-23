@@ -17,7 +17,7 @@ export default function Movimientos() {
   const [filtro, setFiltro] = useState<(typeof FILTROS)[number]>('Todos');
 
   const { datos, error } = useCarga(async () => {
-    const [categorias, movimientos] = await Promise.all([cargarCategorias(), cargarMovimientosDelAnio(anio)]);
+    const [categorias, movimientos] = await Promise.all([cargarCategorias({ todas: true }), cargarMovimientosDelAnio(anio)]);
     return { categorias: new Map(categorias.map((c) => [c.id, c.nombre])), movimientos };
   }, [anio]);
 

@@ -13,6 +13,8 @@ export function mensajeError(e: unknown): string {
   if (msg.includes('ticker_check')) return 'Escribe el ticker en mayúsculas y sin espacios.';
   if (msg.includes('cantidad_check')) return 'La cantidad debe ser mayor que cero.';
   if (msg.includes('precio_check')) return 'El precio debe ser mayor que cero.';
+  if (msg.includes('categorias_nombre_unico')) return 'Ya tienes una categoría con ese nombre.';
+  if (msg.includes('movimientos_categoria_id_fkey')) return 'Esta categoría tiene movimientos. Ocúltala en lugar de borrarla.';
   if (msg.includes('Invalid login credentials')) return 'Correo o contraseña incorrectos.';
   if (msg.includes('Email not confirmed')) return 'Confirma tu correo antes de entrar.';
   if (msg.includes('Network request failed') || msg.includes('Failed to fetch')) return 'Sin conexión. Revisa tu internet e inténtalo de nuevo.';
@@ -25,14 +27,31 @@ function lanzar(error: unknown): never {
 
 // ─── Categorías ───────────────────────────────────────────────
 
-export async function cargarCategorias(): Promise<Categoria[]> {
-  const { data, error } = await supabase
-    .from('categorias')
-    .select('id, nombre, tipo, orden')
-    .eq('activa', true)
-    .order('orden');
+/** Categorías activas; con `todas` también las ocultas (para mostrar nombres de movimientos viejos). */
+export async function cargarCategorias({ todas = false } = {}): Promise<Categoria[]> {
+  let consulta = supabase.from('categorias').select('id, nombre, tipo, orden, activa').order('orden');
+  if (!todas) consulta = consulta.eq('activa', true);
+  const { data, error } = await consulta;
   if (error) lanzar(error);
   return data as Categoria[];
+}
+
+export async function crearCategoria(c: Pick<Categoria, 'nombre' | 'tipo' | 'orden'>) {
+  const { error } = await supabase.from('categorias').insert({ ...c, nombre: c.nombre.trim() });
+  if (error) lanzar(error);
+}
+
+export async function actualizarCategoria(id: string, cambios: Partial<Pick<Categoria, 'nombre' | 'orden' | 'activa'>>) {
+  const { error } = await supabase
+    .from('categorias')
+    .update(cambios.nombre === undefined ? cambios : { ...cambios, nombre: cambios.nombre.trim() })
+    .eq('id', id);
+  if (error) lanzar(error);
+}
+
+export async function borrarCategoria(id: string) {
+  const { error } = await supabase.from('categorias').delete().eq('id', id);
+  if (error) lanzar(error);
 }
 
 // ─── Movimientos ──────────────────────────────────────────────

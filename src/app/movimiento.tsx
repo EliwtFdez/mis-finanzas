@@ -31,7 +31,7 @@ export default function FormularioMovimiento() {
   useEffect(() => {
     (async () => {
       try {
-        const [cats, ctas] = await Promise.all([cargarCategorias(), cuentasUsadas()]);
+        const [cats, ctas] = await Promise.all([cargarCategorias({ todas: true }), cuentasUsadas()]);
         setCategorias(cats);
         setCuentas(ctas);
         if (id) {
@@ -53,7 +53,7 @@ export default function FormularioMovimiento() {
 
   if (!categorias) return error ? <MensajeError>{error}</MensajeError> : <Cargando />;
 
-  const delTipo = categorias.filter((c) => c.tipo === tipo);
+  const delTipo = categorias.filter((c) => c.tipo === tipo && (c.activa !== false || c.id === categoriaId));
   const monto = leerNumero(importe);
   const faltante = !monto || monto <= 0 ? 'Escribe un importe mayor que cero.' : !categoriaId ? 'Elige una categoría.' : null;
 

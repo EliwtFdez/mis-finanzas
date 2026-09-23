@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { resumenMes } from '@/domain/finanzas';
 import { cargarCategorias, cargarMovimientosDelAnio, cargarPresupuestos, guardarPresupuestos } from '@/lib/datos';
@@ -9,6 +10,7 @@ import { colores, espacio, texto } from '@/lib/tema';
 import { Boton, MensajeError, Pantalla, Seccion } from '@/components/ui';
 
 export default function PresupuestoPantalla() {
+  const router = useRouter();
   const { anio, mes } = usePeriodo();
   const mesAnterior = mes === 1 ? { anio: anio - 1, mes: 12 } : { anio, mes: mes - 1 };
 
@@ -133,6 +135,7 @@ export default function PresupuestoPantalla() {
               estilo={{ marginTop: espacio.m }}
             />
           )}
+          <Boton titulo="Editar categorías" variante="secundario" onPress={() => router.push('/categorias')} estilo={{ marginTop: espacio.m }} />
         </>
       )}
     </Pantalla>

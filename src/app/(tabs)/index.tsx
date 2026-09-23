@@ -14,7 +14,7 @@ export default function Resumen() {
 
   const { datos, error } = useCarga(async () => {
     const [categorias, movimientos, operaciones, presupuestos] = await Promise.all([
-      cargarCategorias(),
+      cargarCategorias({ todas: true }),
       cargarMovimientosDelAnio(anio),
       cargarOperaciones(),
       cargarPresupuestos(anio, mes),

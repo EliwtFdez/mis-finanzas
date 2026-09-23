@@ -135,6 +135,10 @@ export default function Usuario() {
         <Renglon izquierda="Presupuestos" derecha={String(datos?.presupuestos ?? '…')} />
       </Seccion>
 
+      <Seccion titulo="Organización">
+        <Renglon izquierda="Categorías ›" detalle="Agrega, renombra, ordena u oculta" onPress={() => router.push('/categorias')} />
+      </Seccion>
+
       <Seccion titulo="Registro automático">
         <Renglon
           izquierda="Apple Pay con Atajos ›"
