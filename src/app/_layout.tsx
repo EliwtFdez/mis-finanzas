@@ -46,6 +46,7 @@ function Navegacion() {
         <Stack.Screen name="fijos" options={{ presentation: 'modal', headerShown: true, title: 'Gastos e ingresos fijos' }} />
         <Stack.Screen name="msi" options={{ presentation: 'modal', headerShown: true, title: 'Meses sin intereses' }} />
         <Stack.Screen name="metas" options={{ presentation: 'modal', headerShown: true, title: 'Metas de ahorro' }} />
+        <Stack.Screen name="patrimonio" options={{ presentation: 'modal', headerShown: true, title: 'Patrimonio neto' }} />
         <Stack.Screen name="revisar" options={{ presentation: 'modal', headerShown: true, title: 'Gastos por revisar' }} />
         <Stack.Screen name="categorias" options={{ presentation: 'modal', headerShown: true, title: 'Categorías' }} />
         <Stack.Screen name="atajos" options={{ presentation: 'modal', headerShown: true, title: 'Apple Pay con Atajos' }} />

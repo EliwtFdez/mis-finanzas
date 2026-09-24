@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { calcularCartera, nivelPresupuesto, repartoGastos, resumenAnual, resumenMes, type NivelPresupuesto } from '@/domain/finanzas';
 import { estadoMetas } from '@/domain/metas';
+import { cambioDesde, netoDeFoto } from '@/domain/patrimonio';
 import { estadoMsi } from '@/domain/msi';
 import { proximosDelMes } from '@/domain/recurrentes';
 import {
@@ -9,6 +10,7 @@ import {
   cargarCategorias,
   cargarComprasMsi,
   cargarDividendos,
+  cargarFotosPatrimonio,
   cargarMetas,
   cargarMovimientosDelAnio,
   cargarOperaciones,
@@ -17,6 +19,7 @@ import {
   contarPorRevisar,
 } from '@/lib/datos';
 import { aPesos, aPesosCortos, fechaDeCorte, fechaLegible, hoy, MESES_CORTOS } from '@/lib/formato';
+import { calcularPatrimonioActual } from '@/lib/patrimonio';
 import { usePeriodo } from '@/lib/periodo';
 import { useCarga } from '@/lib/useCarga';
 import { colores, espacio, texto } from '@/lib/tema';
@@ -52,6 +55,15 @@ export default function Resumen() {
       proximosFijos: proximosDelMes(recurrentes, hoy()).filter((p) => p.fecha.startsWith(fechaDeCorte(anio, mes).slice(0, 7))),
     };
   }, [anio, mes]);
+
+  // Aparte y sin bloquear: consulta precios de mercado, que pueden tardar.
+  const esMesActual = fechaDeCorte(anio, mes) === hoy();
+  const { datos: patrimonio } = useCarga(async () => {
+    if (!esMesActual) return null;
+    const [actual, fotos] = await Promise.all([calcularPatrimonioActual(), cargarFotosPatrimonio()]);
+    const conHoy = [...fotos.filter((f) => f.fecha !== actual.foto.fecha), actual.foto];
+    return { ...actual, cambio: actual.conSaldo ? cambioDesde(conHoy, 30) : null };
+  }, [esMesActual]);
 
   const r = datos?.mesActual;
   const lineas = r?.porCategoria.filter((l) => l.gastado > 0 || l.presupuesto !== null) ?? [];
@@ -106,6 +118,22 @@ export default function Resumen() {
             <Cifra etiqueta="Gastos" valor={r.gastos} />
             <Cifra etiqueta="Diferencia" valor={r.diferencia} color={r.diferencia < 0 ? colores.rojo : colores.verde} />
           </View>
+
+          {patrimonio && (
+            <Renglon
+              izquierda="Patrimonio neto ›"
+              detalle={
+                !patrimonio.conSaldo
+                  ? 'Dinos cuánto tienes hoy para calcularlo'
+                  : patrimonio.cambio
+                    ? `${patrimonio.cambio.monto >= 0 ? '+' : '−'}${aPesos(Math.abs(patrimonio.cambio.monto))} desde el ${fechaLegible(patrimonio.cambio.desde)}`
+                    : 'Lo que tienes menos lo que debes'
+              }
+              derecha={patrimonio.conSaldo ? aPesos(netoDeFoto(patrimonio.foto)) : undefined}
+              derechaColor={patrimonio.conSaldo && netoDeFoto(patrimonio.foto) < 0 ? colores.rojo : undefined}
+              onPress={() => router.push('/patrimonio')}
+            />
+          )}
 
           <Seccion titulo="Gastos por categoría">
             {lineas.length === 0 && <Vacio>Aún no hay gastos este mes.</Vacio>}

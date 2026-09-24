@@ -124,7 +124,7 @@ export default function Usuario() {
       await borrarTodosMisDatos();
       setConfirmando(false);
       setConfirmacion('');
-      setAviso('Todos tus movimientos, presupuestos, operaciones, dividendos, fijos, compras a meses y metas fueron eliminados.');
+      setAviso('Todos tus movimientos, presupuestos, operaciones, dividendos, fijos, compras a meses, metas y el historial de patrimonio fueron eliminados.');
       recargar();
     } catch (e) {
       setError(mensajeError(e));
@@ -179,6 +179,7 @@ export default function Usuario() {
         <Renglon izquierda="Gastos e ingresos fijos ›" detalle="Renta, suscripciones, sueldo…" onPress={() => router.push('/fijos')} />
         <Renglon izquierda="Meses sin intereses ›" detalle="Compras a meses y lo que falta por pagar" onPress={() => router.push('/msi')} />
         <Renglon izquierda="Metas de ahorro ›" detalle="Cuánto llevas y cuánto apartar al mes" onPress={() => router.push('/metas')} />
+        <Renglon izquierda="Patrimonio neto ›" detalle="Lo que tienes menos lo que debes, día a día" onPress={() => router.push('/patrimonio')} />
       </Seccion>
 
       <Seccion titulo="Registro automático">
@@ -247,7 +248,7 @@ export default function Usuario() {
         <View style={estilos.peligro}>
           <Text style={texto.cuerpo}>Borrar todos mis datos financieros</Text>
           <Text style={[texto.nota, { marginTop: espacio.s }]}>
-            Elimina movimientos, presupuestos, operaciones de acciones, dividendos, gastos fijos, compras a meses y metas de ahorro. Tu cuenta y categorías se conservan. No se puede deshacer.
+            Elimina movimientos, presupuestos, operaciones de acciones, dividendos, gastos fijos, compras a meses, metas de ahorro e historial de patrimonio. Tu cuenta y categorías se conservan. No se puede deshacer.
           </Text>
 
           {!confirmando ? (

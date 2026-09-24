@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import type { FotoPatrimonio } from '@/domain/patrimonio';
 import type { Aportacion, Categoria, Dividendo, MetaAhorro, Movimiento, Operacion, Presupuesto } from '@/domain/finanzas';
 import type { CompraMsi } from '@/domain/msi';
 import type { Recurrente } from '@/domain/recurrentes';
@@ -402,6 +403,42 @@ export async function borrarMeta(id: string) {
 /** `importe` negativo = retiro. */
 export async function aportarAMeta(meta_id: string, importe: number, fecha: string) {
   const { error } = await supabase.from('aportaciones_meta').insert({ meta_id, importe, fecha });
+  if (error) lanzar(error);
+}
+
+// ─── Patrimonio ───────────────────────────────────────────────
+
+/** Efectivo a hoy (desde el saldo que dio la persona) y deuda pendiente a meses sin intereses. */
+export async function cargarEfectivoYDeudas(): Promise<{ conSaldo: boolean; efectivo: number; deudas: number }> {
+  const { data, error } = await supabase.rpc('efectivo_y_deudas');
+  if (error) lanzar(error);
+  const r = data as { con_saldo: boolean; efectivo: number; deudas: number };
+  return { conSaldo: r.con_saldo, efectivo: num(r.efectivo), deudas: num(r.deudas) };
+}
+
+/** «Hoy tengo X en mis cuentas»: el efectivo parte de aquí. */
+export async function guardarSaldoEfectivo(monto: number, fecha: string) {
+  const { error } = await supabase
+    .from('saldo_efectivo')
+    .upsert({ monto, fecha, registrado_en: new Date().toISOString() }, { onConflict: 'user_id' });
+  if (error) lanzar(error);
+}
+
+export async function cargarFotosPatrimonio(): Promise<FotoPatrimonio[]> {
+  const { data, error } = await supabase
+    .from('patrimonio_diario')
+    .select('fecha, efectivo, inversiones, deudas')
+    .order('fecha', { ascending: false })
+    .limit(730);
+  if (error) lanzar(error);
+  return (data ?? [])
+    .map((f) => ({ fecha: String(f.fecha), efectivo: num(f.efectivo), inversiones: num(f.inversiones), deudas: num(f.deudas) }))
+    .reverse();
+}
+
+/** Una foto por día: la última del día sobrescribe a las anteriores. */
+export async function guardarFotoPatrimonio(f: FotoPatrimonio) {
+  const { error } = await supabase.from('patrimonio_diario').upsert(f, { onConflict: 'user_id,fecha' });
   if (error) lanzar(error);
 }
 
